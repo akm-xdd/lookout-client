@@ -1,4 +1,7 @@
-// lib/data-loader.ts
+// lib/data-loader.ts - API ONLY (NO SAMPLE DATA)
+import { workspaceAPI, APIError } from './api-client'
+
+// Keep existing interfaces
 export interface EndpointData {
   id: string
   name: string
@@ -69,54 +72,67 @@ export interface DashboardData {
   recentIncidents: IncidentData[]
 }
 
-// Default empty data structure
-const getEmptyDashboardData = (): DashboardData => ({
-  user: {
-    id: '',
-    email: '',
-    workspaceCount: 0,
-    maxWorkspaces: 5,
-    totalEndpoints: 0,
-    maxEndpoints: 35
-  },
-  overview: {
-    overallUptime: 0,
-    activeIncidents: 0,
-    avgResponseTime: 0,
-    totalChecksToday: 0,
-    uptimeHistory: [],
-    responseTimeHistory: []
-  },
-  workspaces: [],
-  recentIncidents: []
-})
-
-// Load dashboard data from file or return empty data
+// Load dashboard data from FastAPI ONLY
 export const loadDashboardData = async (): Promise<DashboardData> => {
   try {
-    // In a real app, this would be an API call
-    // For now, we'll try to load from a local file
-    const response = await fetch('/data/dashboard-sample.json')
+    console.log('🔄 Loading dashboard data from API...')
     
-    if (!response.ok) {
-      console.log('Sample data file not found, using empty data')
-      return getEmptyDashboardData()
+    // Get real workspaces from FastAPI
+    const realWorkspaces = await workspaceAPI.getWorkspaces()
+    console.log('✅ Real workspaces loaded:', realWorkspaces.length)
+    
+    // Transform API workspaces to frontend format
+    const transformedWorkspaces: WorkspaceData[] = realWorkspaces.map((workspace: any) => ({
+      id: workspace.id,
+      name: workspace.name,
+      description: workspace.description || '',
+      createdAt: workspace.created_at,
+      endpointCount: 0, // TODO: Get from endpoints API
+      maxEndpoints: 7,
+      status: 'online' as const, // TODO: Calculate from endpoints
+      uptime: 100, // TODO: Calculate from check results
+      avgResponseTime: 0, // TODO: Calculate from check results
+      lastCheck: new Date().toISOString(), // TODO: Get from last check
+      activeIncidents: 0, // TODO: Calculate from incidents
+      endpoints: [] // TODO: Get from endpoints API
+    }))
+    
+    return {
+      user: {
+        id: '', // Will be set from auth
+        email: '', // Will be set from auth
+        workspaceCount: realWorkspaces.length,
+        maxWorkspaces: 5,
+        totalEndpoints: 0, // TODO: Sum from all endpoints
+        maxEndpoints: 35
+      },
+      overview: {
+        overallUptime: realWorkspaces.length > 0 ? 100 : 0, // TODO: Calculate from all endpoints
+        activeIncidents: 0, // TODO: Count from incidents
+        avgResponseTime: 0, // TODO: Calculate from all check results
+        totalChecksToday: 0, // TODO: Count from today's checks
+        uptimeHistory: [], // TODO: Generate from check results
+        responseTimeHistory: [] // TODO: Generate from check results
+      },
+      workspaces: transformedWorkspaces,
+      recentIncidents: [] // TODO: Get from incidents API
     }
     
-    const data = await response.json()
-    console.log('✅ Loaded sample dashboard data:', {
-      workspaces: data.workspaces?.length || 0,
-      totalEndpoints: data.user?.totalEndpoints || 0
-    })
-    
-    return data
   } catch (error) {
-    console.log('📝 No sample data found, using empty state:', error)
-    return getEmptyDashboardData()
+    if (error instanceof APIError) {
+      console.error('❌ API Error:', error.message)
+      if (error.status === 401) {
+        throw new Error('Authentication required. Please log in again.')
+      }
+      throw new Error(`API Error: ${error.message}`)
+    }
+    
+    console.error('❌ Failed to load dashboard data:', error)
+    throw new Error('Failed to load dashboard data')
   }
 }
 
-// Utility functions for data analysis
+// Utility functions (keep existing)
 export const getDashboardStats = (data: DashboardData) => {
   const { workspaces, overview } = data
   

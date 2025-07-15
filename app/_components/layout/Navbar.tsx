@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface NavbarProps {
   onLoginClick?: () => void;
@@ -7,15 +8,28 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onGetStartedClick }) => {
+
+  if (!onGetStartedClick) {
+    onGetStartedClick = () => {
+      window.location.href = '/register';
+    };
+  }
+
+  if (!onLoginClick) {
+    onLoginClick = () => {
+      window.location.href = '/login';
+    };
+  }
+
   return (
     <nav className="relative z-10 px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+        <Link href="/" className="flex items-center space-x-3">
           <Image src="/icon.png" alt="LookOut" className="w-8 h-8"  width={32} height={32} />
           <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
             LookOut
           </span>
-        </div>
+        </Link>
         <div className="flex items-center space-x-4">
             <button 
             onClick={onLoginClick}

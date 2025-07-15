@@ -27,8 +27,7 @@ const HomePage: React.FC = () => {
   };
 
   const handleStartMonitoringClick = () => {
-    // TODO: Navigate to register/dashboard
-    console.log('Navigate to start monitoring');
+   window.location.href = '/dashboard';
   };
 
   const handleViewSourceClick = () => {
@@ -37,10 +36,7 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <motion.div  
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1.8, ease: "easeInOut" }}
+    <div  
       className="min-h-screen bg-black text-white overflow-hidden"
     >
       {/* Animated Background */}
@@ -76,7 +72,7 @@ const HomePage: React.FC = () => {
 
       {/* Footer */}
       <Footer />
-    </motion.div>
+    </div>
   );
 };
 
