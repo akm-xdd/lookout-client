@@ -34,7 +34,9 @@ const StatusDistributionChart: React.FC<StatusDistributionChartProps> = ({
   data, 
   className = "" 
 }) => {
-  const stats = getDashboardStats(data)
+  const stats = getDashboardStats(data)!
+
+  
   
   // Create chart data with proper structure for tooltips
   const chartData = [
