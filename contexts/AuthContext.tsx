@@ -106,43 +106,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [session, user, pathname, initialized, loading, isPublicRoute, router])
 
   useEffect(() => {
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', { 
-          event, 
-          userEmail: session?.user?.email,
-          pathname 
-        })
-        
-        setSession(session)
-        setUser(session?.user ?? null)
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      setSession(session)
+      setUser(session?.user ?? null)
 
-        // Handle specific auth events with toasts
-        if (event === 'SIGNED_IN') {
-          console.log('User signed in successfully')
-          
-          // Only redirect if not already on dashboard
-          if (pathname !== '/dashboard') {
-            router.push('/dashboard')
-          }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out')
-          
-          // Only show sign-out toast if it wasn't triggered from login page
-          if (pathname !== '/login' && pathname !== '/') {
-            toast.success('You can always come back!')
-          }
-          
-          router.push('/')
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed')
-        }
+      // Just handle routing - NO TOASTS
+      if (event === 'SIGNED_IN' && pathname !== '/dashboard') {
+        router.push('/dashboard')
+      } else if (event === 'SIGNED_OUT') {
+        router.push('/')
       }
-    )
+    }
+  )
 
-    return () => subscription.unsubscribe()
-  }, [router, pathname])
+  return () => subscription.unsubscribe()
+}, [router, pathname])
 
   const signOut = async () => {
     try {
@@ -163,6 +142,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         duration: 3000,
       })
     } finally {
+      toast.success('You have been signed out', {
+        duration: 2000,
+      })
       setLoading(false)
     }
   }

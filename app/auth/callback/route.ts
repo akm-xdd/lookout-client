@@ -1,4 +1,4 @@
-// app/auth/callback/route.ts - FIXED VERSION
+// app/auth/callback/route.ts - UPDATED WITH SUCCESS PARAMETER
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   if (code) {
     console.log('✅ Authorization code received:', code.substring(0, 10) + '...')
     
-    const cookieStore = cookies()
+    const cookieStore =  await cookies()
     
     // Create server-side Supabase client with cookie handling
     const supabase = createServerClient(
@@ -66,16 +66,19 @@ export async function GET(request: Request) {
           provider: data.session.user.app_metadata.provider
         })
         
-        // Redirect to dashboard
+        // Add success parameter for OAuth login toast
+        const redirectUrl = `${next}?success=oauth`
+        
+        // Redirect to dashboard with success parameter
         const forwardedHost = request.headers.get('x-forwarded-host')
         const isLocalEnv = process.env.NODE_ENV === 'development'
         
         if (isLocalEnv) {
-          return NextResponse.redirect(`${origin}${next}`)
+          return NextResponse.redirect(`${origin}${redirectUrl}`)
         } else if (forwardedHost) {
-          return NextResponse.redirect(`https://${forwardedHost}${next}`)
+          return NextResponse.redirect(`https://${forwardedHost}${redirectUrl}`)
         } else {
-          return NextResponse.redirect(`${origin}${next}`)
+          return NextResponse.redirect(`${origin}${redirectUrl}`)
         }
       } else {
         console.error('❌ No session in exchange response')

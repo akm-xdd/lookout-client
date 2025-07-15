@@ -35,67 +35,69 @@ export default function LoginPage() {
     }
   }, [])
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+const handleEmailLogin = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setLoading(true)
 
-    try {
-      const { data, error: authError } = await authHelpers.signIn(email, password)
-      
-      if (authError) {
-        toast.error('Sign in failed', {
-          description: authError.message,
-          duration: 4000,
-        })
-        setLoading(false)
-      } else if (data.session) {
-        // Show success toast for email login (OAuth success is handled in AuthContext)
-        toast.success("It is always nice to see you!")
-        // AuthContext will handle redirect
-      } else {
-        toast.error('Sign in failed', {
-          description: 'No session was created. Please try again.',
-          duration: 4000,
-        })
-        setLoading(false)
-      }
-    } catch (err) {
-      toast.error('Unexpected error', {
-        description: 'Something went wrong. Please try again.',
-        duration: 4000,
-      })
-      setLoading(false)
-    }
-  }
-
-  const handleGitHubLogin = async () => {
-    setLoading(true)
+  try {
+    const { data, error: authError } = await authHelpers.signIn(email, password)
     
-    try {
-      const { error: authError } = await authHelpers.signInWithGitHub()
-      localStorage.setItem('pendingOAuthLogin', 'true')
+    if (authError) {
+      toast.error('Sign in failed', {
+        description: authError.message,
+        duration: 4000,
+      })
+      setLoading(false)
+    } else if (data.session) {
+      // Show success toast and wait 1 second before redirect
+      toast.success('Welcome back!')
       
-      if (authError) {
-        toast.error('GitHub sign in failed', {
-          description: authError.message,
-          duration: 4000,
-        })
-        setLoading(false)
-      } else {
-        // Show loading toast, success will be handled by AuthContext
-        toast.loading('This may take a second...Or several.', {
-          duration: 2000,
-        })
-      }
-    } catch (err) {
-      toast.error('GitHub sign in failed', {
-        description: 'Unable to connect to GitHub. Please try again.',
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 1000)
+      
+    } else {
+      toast.error('Sign in failed', {
+        description: 'No session was created. Please try again.',
         duration: 4000,
       })
       setLoading(false)
     }
+  } catch (err) {
+    toast.error('Unexpected error', {
+      description: 'Something went wrong. Please try again.',
+      duration: 4000,
+    })
+    setLoading(false)
   }
+}
 
+const handleGitHubLogin = async () => {
+  setLoading(true)
+  
+  try {
+    const { error: authError } = await authHelpers.signInWithGitHub()
+    
+    if (authError) {
+      toast.error('GitHub sign in failed', {
+        description: authError.message,
+        duration: 4000,
+      })
+      setLoading(false)
+    } else {
+      toast.loading('This may take a second...Or several.', {
+        duration: 2000,
+      })
+      // GitHub will handle its own redirect
+    }
+  } catch (err) {
+    toast.error('GitHub sign in failed', {
+      description: 'Unable to connect to GitHub. Please try again.',
+      duration: 4000,
+    })
+    setLoading(false)
+  }
+}
   return (
     <motion.div
       initial={{ opacity: 0 }}
