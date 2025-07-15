@@ -32,7 +32,7 @@ const defaultFeatures: Feature[] = [
   {
     icon: <Zap className="w-6 h-6" />,
     title: "Developer-First",
-    description: "Built by developers, for developers. Full control over configuration"
+    description: "Built by a solo dev, for solo devs. Full control over configuration"
   }
 ];
 

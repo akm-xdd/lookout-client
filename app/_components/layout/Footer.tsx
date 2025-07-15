@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -8,7 +9,7 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center space-x-3 mb-4 md:mb-0">
-            <img src="/icon.png" alt="LookOut" className="w-8 h-8" />
+            <Image src="/icon.png" alt="LookOut" className="w-8 h-8"  width={32} height={32} />
             <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               LookOut
             </span>

@@ -12,7 +12,7 @@ interface StatsSectionProps {
 const defaultStats: Stat[] = [
   { value: "5", label: "Workspaces per User" },
   { value: "35", label: "Total Endpoints" },
-  { value: "Free", label: "Always" },
+  { value: "Free", label: "Always (for now)" },
   { value: "24/7", label: "Monitoring" }
 ];
 

@@ -44,14 +44,14 @@ const CTASection: React.FC<CTASectionProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
           <button 
             onClick={onPrimaryClick}
-            className="group px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all flex items-center space-x-2 text-lg font-medium"
+            className="group px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all flex items-center space-x-2 text-lg font-medium cursor-pointer"
           >
             <span>{primaryButtonText}</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
           <button 
             onClick={onSecondaryClick}
-            className="px-8 py-4 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 hover:bg-white/10 transition-all flex items-center space-x-2 text-lg font-medium"
+            className="px-8 py-4 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 hover:bg-white/10 transition-all flex items-center space-x-2 text-lg font-medium cursor-pointer"
           >
             <Github className="w-5 h-5" />
             <span>{secondaryButtonText}</span>

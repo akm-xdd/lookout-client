@@ -1,58 +1,69 @@
 import React from 'react';
+import { LucideIcon } from 'lucide-react';
 
-interface StatusIndicatorProps {
-  status: 'online' | 'warning' | 'offline' | 'unknown';
+interface ButtonProps {
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
-  animate?: boolean;
-  showLabel?: boolean;
+  icon?: LucideIcon;
+  iconPosition?: 'left' | 'right';
+  onClick?: () => void;
+  disabled?: boolean;
   className?: string;
+  type?: 'button' | 'submit' | 'reset';
 }
 
-const StatusIndicator: React.FC<StatusIndicatorProps> = ({
-  status,
+const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = 'primary',
   size = 'md',
-  animate = true,
-  showLabel = false,
-  className = ''
+  icon: Icon,
+  iconPosition = 'right',
+  onClick,
+  disabled = false,
+  className = '',
+  type = 'button'
 }) => {
-  const statusConfig = {
-    online: {
-      color: 'bg-green-500',
-      label: 'Online'
-    },
-    warning: {
-      color: 'bg-yellow-500',
-      label: 'Warning'
-    },
-    offline: {
-      color: 'bg-red-500',
-      label: 'Offline'
-    },
-    unknown: {
-      color: 'bg-gray-500',
-      label: 'Unknown'
-    }
+  const baseClasses = 'inline-flex items-center justify-center font-medium transition-all rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
+  
+  const variantClasses = {
+    primary: 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white',
+    secondary: 'bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 text-white',
+    ghost: 'text-gray-300 hover:text-white'
   };
-
+  
   const sizeClasses = {
-    sm: 'w-2 h-2',
-    md: 'w-3 h-3',
-    lg: 'w-4 h-4'
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-6 py-3 text-base',
+    lg: 'px-8 py-4 text-lg'
   };
 
-  const config = statusConfig[status];
-  const dotClasses = `${sizeClasses[size]} ${config.color} rounded-full ${animate ? 'animate-pulse' : ''}`;
+  const iconClasses = {
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-5 h-5'
+  };
 
-  if (showLabel) {
-    return (
-      <div className={`flex items-center space-x-2 ${className}`}>
-        <div className={dotClasses}></div>
-        <span className="text-sm text-gray-400">{config.label}</span>
-      </div>
-    );
-  }
+  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
 
-  return <div className={`${dotClasses} ${className}`}></div>;
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`group ${classes}`}
+    >
+      {Icon && iconPosition === 'left' && (
+        <Icon className={`${iconClasses[size]} mr-2 ${variant === 'primary' ? 'group-hover:-translate-x-0.5' : ''} transition-transform`} />
+      )}
+      
+      <span>{children}</span>
+      
+      {Icon && iconPosition === 'right' && (
+        <Icon className={`${iconClasses[size]} ml-2 ${variant === 'primary' ? 'group-hover:translate-x-1' : ''} transition-transform`} />
+      )}
+    </button>
+  );
 };
 
-export default StatusIndicator;
+export default Button;

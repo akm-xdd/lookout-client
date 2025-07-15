@@ -17,13 +17,11 @@ import CTASection from './_components/sections/CTASection';
 const HomePage: React.FC = () => {
   // Navigation handlers
   const handleLoginClick = () => {
-    // TODO: Navigate to login page
-    console.log('Navigate to login');
+    window.location.href = '/login';
   };
 
   const handleGetStartedClick = () => {
-    // TODO: Navigate to register page
-    console.log('Navigate to register');
+    window.location.href = '/register';
   };
 
   const handleStartMonitoringClick = () => {
@@ -33,7 +31,7 @@ const HomePage: React.FC = () => {
 
   const handleViewSourceClick = () => {
     // TODO: Open GitHub repository
-    window.open('https://github.com/yourusername/lookout', '_blank');
+    window.open('https://github.com/akm-xdd/lookout-client', '_blank');
   };
 
   return (
@@ -71,6 +69,7 @@ const HomePage: React.FC = () => {
       <CTASection 
         onPrimaryClick={handleGetStartedClick}
         onSecondaryClick={handleViewSourceClick}
+        
       />
 
       {/* Footer */}
