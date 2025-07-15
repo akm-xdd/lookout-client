@@ -73,6 +73,7 @@ export default function LoginPage() {
     
     try {
       const { error: authError } = await authHelpers.signInWithGitHub()
+      localStorage.setItem('pendingOAuthLogin', 'true')
       
       if (authError) {
         toast.error('GitHub sign in failed', {
@@ -85,8 +86,6 @@ export default function LoginPage() {
         toast.loading('This may take a second...Or several.', {
           duration: 2000,
         })
-        // OAuth redirect will happen automatically
-        // Success toast will be shown in AuthContext when user returns
       }
     } catch (err) {
       toast.error('GitHub sign in failed', {

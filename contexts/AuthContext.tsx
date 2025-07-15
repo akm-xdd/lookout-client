@@ -122,19 +122,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (event === 'SIGNED_IN') {
           console.log('User signed in successfully')
           
-          // Show success toast for OAuth sign-ins
-          if (session?.user) {
-            const provider = session.user.app_metadata?.provider
-            const email = session.user.email
-            
-            if (provider === 'github') {
-              toast.success("It is always nice to see you!")
-            } else if (provider === 'email') {
-              // This might be handled in the login component instead
-              console.log('Email sign-in handled by login component')
-            }
-          }
-          
           // Only redirect if not already on dashboard
           if (pathname !== '/dashboard') {
             router.push('/dashboard')

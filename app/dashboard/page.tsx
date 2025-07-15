@@ -1,30 +1,55 @@
 'use client'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
-import { Plus, Settings, LogOut } from 'lucide-react'
+import { Settings, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 import ProtectedRoute from '../auth/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
-import AnimatedBackground from '@/app/_components/layout/AnimatedBackground'
+import AnimatedBackground from '../_components/layout/AnimatedBackground'
+import OverviewStatsSection from '../_components/dashboard/OverviewStatsSection'
+import ChartsSection from '../_components/dashboard/ChartsSection'
+import WorkspacesSection from '../_components/dashboard/WorkspacesSection'
+import { loadDashboardData, DashboardData } from '@/lib/data-loader'
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth()
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Load dashboard data on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        const data = await loadDashboardData()
+        
+        // If we have sample data, merge user email from auth
+        if (data && user?.email) {
+          data.user.email = user.email
+        }
+        
+        setDashboardData(data)
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error)
+        toast.error('Failed to load dashboard', {
+          description: 'Please refresh the page to try again',
+          duration: 5000,
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (user) {
+      loadData()
+    }
+  }, [user])
 
   const handleSignOut = async () => {
-    // No need for toast here - AuthContext handles it
     await signOut()
   }
 
-  const handleCreateWorkspace = () => {
-    // TODO: Open create workspace modal/page
-    toast.info('Coming soon!', {
-      description: 'Workspace creation is being built',
-      duration: 3000,
-    })
-  }
-
   const handleSettings = () => {
-    // TODO: Navigate to settings
     toast.info('Settings coming soon!', {
       description: 'User settings page is being built',
       duration: 3000,
@@ -78,60 +103,41 @@ export default function DashboardPage() {
             {/* Welcome Section */}
             <div className="mb-12">
               <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Welcome to your Dashboard
+                {loading ? 'Loading...' : 
+                 dashboardData?.workspaces.length === 0 ? 'Welcome to LookOut' : 
+                 'Your Dashboard'}
               </h1>
               <p className="text-gray-400 text-lg">
-                Manage your workspaces and monitor your projects from here.
+                {loading ? 'Fetching your monitoring data...' :
+                 dashboardData?.workspaces.length === 0 ? 
+                 'Start monitoring your projects and keep them alive.' :
+                 'Monitor your projects and keep them running smoothly.'}
               </p>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-                <div className="text-3xl font-bold text-blue-400 mb-2">0/5</div>
-                <div className="text-gray-400">Workspaces</div>
-              </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-                <div className="text-3xl font-bold text-purple-400 mb-2">0/35</div>
-                <div className="text-gray-400">Total Endpoints</div>
-              </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
-                <div className="text-3xl font-bold text-green-400 mb-2">--</div>
-                <div className="text-gray-400">Avg Uptime</div>
-              </div>
-            </div>
+            {/* Overview Stats */}
+            {dashboardData && (
+              <OverviewStatsSection 
+                data={dashboardData} 
+                loading={loading}
+              />
+            )}
+
+            {/* Charts Section - Only show if there's data */}
+            {dashboardData && (
+              <ChartsSection 
+                data={dashboardData} 
+                loading={loading}
+              />
+            )}
 
             {/* Workspaces Section */}
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Your Workspaces</h2>
-                <button 
-                  onClick={handleCreateWorkspace}
-                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Create Workspace</span>
-                </button>
-              </div>
-
-              {/* Empty State */}
-              <div className="text-center py-12 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <Plus className="w-8 h-8 text-blue-400" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">No workspaces yet</h3>
-                <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                  Create your first workspace to start monitoring your projects. Each workspace can contain up to 7 endpoints.
-                </p>
-                <button 
-                  onClick={handleCreateWorkspace}
-                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all mx-auto"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Create Your First Workspace</span>
-                </button>
-              </div>
-            </div>
+            {dashboardData && (
+              <WorkspacesSection 
+                data={dashboardData} 
+                loading={loading}
+              />
+            )}
 
           </div>
         </main>

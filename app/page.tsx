@@ -14,6 +14,8 @@ import FeaturesSection from './_components/sections/FeaturesSection';
 import DashboardPreview from './_components/sections/DashboardPreview';
 import CTASection from './_components/sections/CTASection';
 
+import {toast} from 'sonner';
+
 const HomePage: React.FC = () => {
   // Navigation handlers
   const handleLoginClick = () => {
