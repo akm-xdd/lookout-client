@@ -1,4 +1,3 @@
-// lib/data-loader.ts - API ONLY (NO SAMPLE DATA)
 import { workspaceAPI, APIError } from './api-client'
 
 // Keep existing interfaces
@@ -72,17 +71,27 @@ export interface DashboardData {
   recentIncidents: IncidentData[]
 }
 
+// API Workspace interface
+interface APIWorkspace {
+  id: string
+  name: string
+  description: string | null
+  created_at: string
+  updated_at: string
+  user_id: string
+}
+
 // Load dashboard data from FastAPI ONLY
 export const loadDashboardData = async (): Promise<DashboardData> => {
   try {
     console.log('🔄 Loading dashboard data from API...')
     
     // Get real workspaces from FastAPI
-    const realWorkspaces = await workspaceAPI.getWorkspaces()
+    const realWorkspaces = await workspaceAPI.getWorkspaces() as APIWorkspace[]
     console.log('✅ Real workspaces loaded:', realWorkspaces.length)
     
     // Transform API workspaces to frontend format
-    const transformedWorkspaces: WorkspaceData[] = realWorkspaces.map((workspace: any) => ({
+    const transformedWorkspaces: WorkspaceData[] = realWorkspaces.map((workspace: APIWorkspace) => ({
       id: workspace.id,
       name: workspace.name,
       description: workspace.description || '',

@@ -1,6 +1,6 @@
 // app/workspace/[id]/page.tsx
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'motion/react'
 import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
@@ -10,6 +10,14 @@ import WorkspaceHeader from '@/app/_components/workspace/WorkspaceHeader'
 import EndpointsTable from '@/app/_components/workspace/EndpointsTable'
 import WorkspaceChartsSection from '@/app/_components/workspace/WorkspaceChartsSection'
 import { loadDashboardData, DashboardData, WorkspaceData } from '@/lib/data-loader'
+import { useRouter } from 'next/navigation'
+import { workspaceAPI } from '@/lib/api-client'
+
+interface EndpointData {
+  id: string
+  name: string
+  status: 'online' | 'warning' | 'offline' | 'unknown'
+}
 
 interface WorkspaceDetailData {
   id: string
@@ -26,7 +34,7 @@ interface WorkspaceDetailData {
   avgResponseTime: number
   lastCheck: string
   activeIncidents: number
-  endpoints: any[] // TODO: Add endpoints from API
+  endpoints: EndpointData[]
 }
 
 export default function WorkspaceDetailPage() {
@@ -38,7 +46,7 @@ export default function WorkspaceDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadWorkspaceData = async () => {
+  const loadWorkspaceData = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -67,35 +75,35 @@ export default function WorkspaceDetailPage() {
       
       setWorkspace(transformedWorkspace)
       
-    } catch (error) {
-      console.error('Failed to load workspace:', error)
+    } catch (err) {
+      console.error('Failed to load workspace:', err)
       
-      if (error instanceof APIError) {
-        if (error.status === 404) {
+      if (err instanceof APIError) {
+        if (err.status === 404) {
           setError('Workspace not found')
-        } else if (error.status === 401) {
+        } else if (err.status === 401) {
           setError('Authentication required. Please log in again.')
         } else {
-          setError(`Failed to load workspace: ${error.message}`)
+          setError(`Failed to load workspace: ${err.message}`)
         }
       } else {
         setError('Failed to load workspace data')
       }
       
       toast.error('Failed to load workspace', {
-        description: error instanceof Error ? error.message : 'Unknown error',
+        description: err instanceof Error ? err.message : 'Unknown error',
         duration: 5000,
       })
     } finally {
       setLoading(false)
     }
-  }
+  }, [workspaceId])
 
   useEffect(() => {
     if (workspaceId) {
       loadWorkspaceData()
     }
-  }, [workspaceId])
+  }, [workspaceId, loadWorkspaceData])
 
   const handleRetry = () => {
     loadWorkspaceData()

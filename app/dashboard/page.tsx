@@ -19,15 +19,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("success") === "oauth") {
-    toast.success("Welcome back!");
-    // Clean up URL
-    window.history.replaceState({}, "", "/dashboard");
-  }
-}, []);
-
   // Load dashboard data
   const loadData = useCallback(async () => {
     if (!user) return
@@ -35,18 +26,18 @@ export default function DashboardPage() {
     try {
       setLoading(true)
       setError(null)
-      const data = await loadDashboardData()
+      const dashData = await loadDashboardData()
       
       // Merge user email from auth
-      if (data && user?.email) {
-        data.user.email = user.email
-        data.user.id = user.id
+      if (dashData && user?.email) {
+        dashData.user.email = user.email
+        dashData.user.id = user.id
       }
       
-      setDashboardData(data)
-    } catch (error) {
-      console.error('Failed to load dashboard data:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setDashboardData(dashData)
+    } catch (loadError) {
+      console.error('Failed to load dashboard data:', loadError)
+      const errorMessage = loadError instanceof Error ? loadError.message : 'Unknown error'
       setError(errorMessage)
       
       toast.error('Failed to load dashboard', {
