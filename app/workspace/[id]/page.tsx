@@ -12,6 +12,7 @@ import WorkspaceChartsSection from '@/app/_components/workspace/WorkspaceChartsS
 import { loadDashboardData, DashboardData, WorkspaceData } from '@/lib/data-loader'
 import { useRouter } from 'next/navigation'
 import { workspaceAPI } from '@/lib/api-client'
+import { RefreshCw } from 'lucide-react'
 
 interface EndpointData {
   id: string
