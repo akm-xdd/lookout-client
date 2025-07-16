@@ -1,3 +1,4 @@
+// lib/data-loader.ts - FIXED VERSION
 import { workspaceAPI, APIError } from './api-client'
 
 // Keep existing interfaces
@@ -99,9 +100,11 @@ export const loadDashboardData = async (): Promise<DashboardData> => {
       endpointCount: 0, // TODO: Get from endpoints API
       maxEndpoints: 7,
       status: 'online' as const, // TODO: Calculate from endpoints
-      uptime: 100, // TODO: Calculate from check results
+      // FIXED: Show N/A uptime for empty workspaces
+      uptime: 0, // Will show N/A in UI when no endpoints exist
       avgResponseTime: 0, // TODO: Calculate from check results
-      lastCheck: new Date().toISOString(), // TODO: Get from last check
+      // FIXED: Use creation time instead of current time for new workspaces
+      lastCheck: workspace.created_at, // Use creation time as initial "last check"
       activeIncidents: 0, // TODO: Calculate from incidents
       endpoints: [] // TODO: Get from endpoints API
     }))
@@ -116,7 +119,8 @@ export const loadDashboardData = async (): Promise<DashboardData> => {
         maxEndpoints: 35
       },
       overview: {
-        overallUptime: realWorkspaces.length > 0 ? 100 : 0, // TODO: Calculate from all endpoints
+        // FIXED: Don't show uptime for empty workspaces
+        overallUptime: 0, // Will be calculated when endpoints exist
         activeIncidents: 0, // TODO: Count from incidents
         avgResponseTime: 0, // TODO: Calculate from all check results
         totalChecksToday: 0, // TODO: Count from today's checks
@@ -172,7 +176,10 @@ export const getWorkspaceStatusIcon = (status: string) => {
   }
 }
 
-export const formatUptime = (uptime: number): string => {
+// ENHANCED: Better uptime formatting for empty workspaces
+export const formatUptime = (uptime: number, hasEndpoints: boolean = true): string => {
+  // If no endpoints, show N/A instead of percentage
+  if (!hasEndpoints || uptime === 0) return 'N/A'
   return `${uptime.toFixed(1)}%`
 }
 
@@ -182,11 +189,15 @@ export const formatResponseTime = (ms: number): string => {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
+// ENHANCED: Better relative time formatting
 export const formatLastCheck = (timestamp: string): string => {
   const now = new Date()
   const checkTime = new Date(timestamp)
   const diffMs = now.getTime() - checkTime.getTime()
   const diffMins = Math.floor(diffMs / (1000 * 60))
+  
+  // Handle invalid dates
+  if (isNaN(diffMs)) return 'Unknown'
   
   if (diffMins < 1) return 'Just now'
   if (diffMins < 60) return `${diffMins}m ago`
@@ -195,5 +206,38 @@ export const formatLastCheck = (timestamp: string): string => {
   if (diffHours < 24) return `${diffHours}h ago`
   
   const diffDays = Math.floor(diffHours / 24)
-  return `${diffDays}d ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  
+  const diffWeeks = Math.floor(diffDays / 7)
+  if (diffWeeks < 4) return `${diffWeeks}w ago`
+  
+  const diffMonths = Math.floor(diffDays / 30)
+  return `${diffMonths}mo ago`
+}
+
+// NEW: Format creation time for display
+export const formatCreatedAt = (timestamp: string): string => {
+  const date = new Date(timestamp)
+  
+  // Handle invalid dates
+  if (isNaN(date.getTime())) return 'Unknown'
+  
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  
+  if (diffMins < 1) return 'Just created'
+  if (diffMins < 60) return `Created ${diffMins}m ago`
+  
+  const diffHours = Math.floor(diffMins / 60)
+  if (diffHours < 24) return `Created ${diffHours}h ago`
+  
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `Created ${diffDays}d ago`
+  
+  const diffWeeks = Math.floor(diffDays / 7)
+  if (diffWeeks < 4) return `Created ${diffWeeks}w ago`
+  
+  const diffMonths = Math.floor(diffDays / 30)
+  return `Created ${diffMonths}mo ago`
 }

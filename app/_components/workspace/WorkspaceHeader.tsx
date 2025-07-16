@@ -1,9 +1,9 @@
-// components/workspace/WorkspaceHeader.tsx - API ONLY
+// components/workspace/WorkspaceHeader.tsx
 import React from 'react'
 import { ArrowLeft, Settings, Plus, Play, MoreVertical, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { formatLastCheck } from '@/lib/data-loader'
+import { formatLastCheck, formatCreatedAt } from '@/lib/data-loader'
 
 interface WorkspaceHeaderProps {
   workspace: {
@@ -17,13 +17,15 @@ interface WorkspaceHeaderProps {
     avgResponseTime: number
     lastCheck: string
     activeIncidents: number
-    endpoints: any[]
+    createdAt: string
+    endpoints: Array<{ name: string; status: 'online' | 'warning' | 'offline' | string }>
   }
   onRefresh?: () => void
 }
 
 const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh }) => {
   const router = useRouter()
+  const hasEndpoints = workspace.endpointCount > 0
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -55,14 +57,13 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
   }
 
   const handleTestAll = () => {
-    if (workspace.endpointCount === 0) {
+    if (!hasEndpoints) {
       toast.info('No endpoints to test', {
         description: 'Add some endpoints first',
         duration: 3000,
       })
       return
     }
-    
     toast.info('Testing all endpoints...', {
       description: 'This feature is being built',
       duration: 3000,
@@ -99,12 +100,14 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
         <div className="flex-1">
           <div className="flex items-center space-x-4 mb-2">
             <h1 className="text-3xl font-bold">{workspace.name}</h1>
-            <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(workspace.status)}`}>
-              <span className="mr-1">{getStatusIcon(workspace.status)}</span>
-              {workspace.status}
-            </div>
+            {hasEndpoints && (
+              <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(workspace.status)}`}>
+                <span className="mr-1">{getStatusIcon(workspace.status)}</span>
+                {workspace.status}
+              </div>
+            )}
           </div>
-          
+
           <p className="text-gray-400 text-lg mb-4">
             {workspace.description || 'No description provided'}
           </p>
@@ -117,7 +120,8 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
                 {workspace.endpointCount}/{workspace.maxEndpoints}
               </span>
             </div>
-            {workspace.endpointCount > 0 ? (
+
+            {hasEndpoints ? (
               <>
                 <div>
                   <span className="text-gray-400">Uptime: </span>
@@ -148,7 +152,9 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
               </>
             ) : (
               <div>
-                <span className="text-gray-400">No endpoints configured yet</span>
+                <span className="text-gray-400">
+                 No endpoints configured yet
+                </span>
               </div>
             )}
           </div>
@@ -166,7 +172,8 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
 
           <button
             onClick={handleTestAll}
-            disabled={workspace.endpointCount === 0}
+            disabled={!hasEndpoints}
+            title={hasEndpoints ? 'Test all endpoints' : 'No endpoints to test'}
             className="flex items-center space-x-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Play className="w-4 h-4" />
@@ -184,18 +191,22 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
           <button
             onClick={handleSettings}
             className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all"
+            title="Workspace settings"
           >
             <Settings className="w-4 h-4" />
           </button>
 
-          <button className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all">
+          <button
+            className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all"
+            title="More options"
+          >
             <MoreVertical className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Endpoint Status Overview */}
-      {workspace.endpointCount > 0 ? (
+      {hasEndpoints ? (
         <div className="flex items-center space-x-4">
           <span className="text-gray-400 text-sm">Endpoints:</span>
           <div className="flex items-center space-x-1">
