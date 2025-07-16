@@ -1,6 +1,7 @@
-// components/dashboard/WorkspaceCard.tsx - MINIMAL FIXES
-import React from "react";
-import { MoreVertical, Clock, AlertCircle } from "lucide-react";
+// components/dashboard/WorkspaceCard.tsx - WITH DROPDOWN MENU
+import React, { useState, useRef, useEffect } from "react";
+import { MoreVertical, Clock, AlertCircle, Edit, Trash2 } from "lucide-react";
+import { toast } from 'sonner'
 import {
   WorkspaceData,
   formatUptime,
@@ -16,11 +17,13 @@ interface WorkspaceDataWithCreated extends WorkspaceData {
 interface WorkspaceCardProps {
   workspace: WorkspaceDataWithCreated;
   onClick?: () => void;
+  onDelete?: () => void; // Add callback for delete action
 }
 
 const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   workspace,
   onClick,
+  onDelete,
 }) => {
   // Add safety checks for undefined properties
   const endpointCount = workspace.endpointCount ?? 0;
@@ -33,6 +36,22 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   
   const hasEndpoints = endpointCount > 0;
   const hasData = hasEndpoints && uptime !== null && avgResponseTime !== null;
+
+  // Dropdown state
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -64,10 +83,47 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger card click if clicking on dropdown
+    if (dropdownRef.current?.contains(e.target as Node)) {
+      return;
+    }
+    onClick?.();
+  };
+
+  const handleDropdownClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDropdownOpen(false);
+    toast.info('Coming soon!', {
+      description: 'Edit workspace functionality is being built',
+      duration: 3000,
+    });
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDropdownOpen(false);
+    
+    // Call the onDelete callback if provided
+    if (onDelete) {
+      onDelete();
+    } else {
+      toast.info('Delete workspace', {
+        description: 'Delete functionality will be implemented soon',
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <div
-      className="group bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 hover:bg-white/8 transition-all cursor-pointer"
-      onClick={onClick}
+      className="group bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 hover:bg-white/8 transition-all cursor-pointer relative"
+      onClick={handleCardClick}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
@@ -90,10 +146,52 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
             )}
           </div>
         </div>
-        <button className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-white/10 rounded-lg">
-          <MoreVertical className="w-4 h-4 text-gray-400" />
-        </button>
+        
+        {/* Dropdown Menu */}
+        <div className="relative" ref={dropdownRef}>
+          <button 
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-white/10 rounded-lg"
+            onClick={handleDropdownClick}
+          >
+            <MoreVertical className="w-4 h-4 text-gray-400" />
+          </button>
+
+          {/* Dropdown Content */}
+          {isDropdownOpen && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-white/10 rounded-lg shadow-lg z-10">
+              <div className="py-2">
+                {/* Edit Option */}
+                <button
+                  onClick={handleEdit}
+                  className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Edit Workspace</span>
+                </button>
+                
+                {/* Divider */}
+                <div className="border-t border-white/10 my-1" />
+                
+                {/* Delete Option */}
+                <button
+                  onClick={handleDelete}
+                  className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete Workspace</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Description */}
+      {workspace.description && (
+        <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+          {workspace.description}
+        </p>
+      )}
 
       {/* Endpoint Status Dots (or placeholder) */}
       <div className="flex items-center space-x-1 mb-4">

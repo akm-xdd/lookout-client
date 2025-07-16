@@ -1,14 +1,16 @@
+// components/dashboard/WorkspacesSection.tsx - WITH DELETE FUNCTIONALITY
 import React, { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import WorkspaceCard from './WorkspaceCard'
 import CreateWorkspaceModal from '../workspace/CreateWorkspaceModal'
+import DeleteWorkspaceModal from '../workspace/DeleteWorkspaceModal'
 import { DashboardData } from '@/lib/data-loader'
 
 interface WorkspacesSectionProps {
   data: DashboardData
   loading?: boolean
-  onRefresh?: () => void // New prop to trigger data refresh
+  onRefresh?: () => void
 }
 
 const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({ 
@@ -18,6 +20,13 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
 }) => {
   const router = useRouter()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [workspaceToDelete, setWorkspaceToDelete] = useState<{
+    id: string
+    name: string
+    description?: string
+    endpointCount: number
+  } | null>(null)
 
   const handleWorkspaceClick = (workspaceId: string) => {
     router.push(`/workspace/${workspaceId}`)
@@ -27,11 +36,36 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
     setIsCreateModalOpen(true)
   }
 
-  const handleModalSuccess = () => {
+  const handleCreateSuccess = () => {
+    setIsCreateModalOpen(false)
     // Trigger data refresh when workspace is created
     if (onRefresh) {
       onRefresh()
     }
+  }
+
+  const handleDeleteWorkspace = (workspace: any) => {
+    setWorkspaceToDelete({
+      id: workspace.id,
+      name: workspace.name,
+      description: workspace.description,
+      endpointCount: workspace.endpointCount
+    })
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleDeleteSuccess = () => {
+    setIsDeleteModalOpen(false)
+    setWorkspaceToDelete(null)
+    // Trigger data refresh when workspace is deleted
+    if (onRefresh) {
+      onRefresh()
+    }
+  }
+
+  const handleDeleteClose = () => {
+    setIsDeleteModalOpen(false)
+    setWorkspaceToDelete(null)
   }
 
   if (loading) {
@@ -71,14 +105,14 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
               <span>Create Your First Workspace</span>
             </button>
           </div>
-        </div>
 
-        {/* Create Workspace Modal */}
-        <CreateWorkspaceModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={handleModalSuccess}
-        />
+          {/* Create Workspace Modal */}
+          <CreateWorkspaceModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onSuccess={handleCreateSuccess}
+          />
+        </div>
       </>
     )
   }
@@ -100,79 +134,69 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
           )}
         </div>
 
+        {/* Usage Info */}
+        <p className="text-gray-400 text-sm mb-6">
+          {data.workspaces.length} of {data.user.maxWorkspaces} workspaces used • {data.overview.totalEndpoints} of {data.user.maxEndpoints} total endpoints
+        </p>
+
         {/* Workspaces Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {data.workspaces.map((workspace) => (
             <WorkspaceCard
               key={workspace.id}
-              workspace={workspace}
+              workspace={{
+                ...workspace,
+                createdAt: workspace.created_at
+              }}
               onClick={() => handleWorkspaceClick(workspace.id)}
+              onDelete={() => handleDeleteWorkspace(workspace)}
             />
           ))}
-          
-          {/* Add New Card (if space available) */}
-          {data.workspaces.length < data.user.maxWorkspaces && (
-            <div 
-              onClick={handleCreateWorkspace}
-              className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 border-dashed p-6 flex flex-col items-center justify-center text-center hover:bg-white/8 transition-all cursor-pointer min-h-[240px]"
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-lg flex items-center justify-center mb-4">
-                <Plus className="w-6 h-6 text-blue-400" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Create Workspace</h3>
-              <p className="text-gray-400 text-sm">
-                Add a new project to monitor
-              </p>
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* Create Workspace Modal */}
-      <CreateWorkspaceModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={handleModalSuccess}
-      />
+        {/* Create Workspace Modal */}
+        <CreateWorkspaceModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={handleCreateSuccess}
+        />
+
+        {/* Delete Workspace Modal */}
+        <DeleteWorkspaceModal
+          isOpen={isDeleteModalOpen}
+          onClose={handleDeleteClose}
+          onSuccess={handleDeleteSuccess}
+          workspace={workspaceToDelete}
+        />
+      </div>
     </>
   )
 }
 
-// Loading skeleton component (same as before)
+// Loading skeleton component
 const WorkspacesSectionLoading: React.FC = () => {
   return (
     <div className="mb-12">
       <div className="flex items-center justify-between mb-6">
-        <div className="h-8 bg-white/10 rounded w-40 animate-pulse"></div>
-        <div className="h-10 bg-white/10 rounded w-36 animate-pulse"></div>
+        <div className="h-8 bg-white/10 rounded w-48 animate-pulse"></div>
+        <div className="h-10 bg-white/10 rounded w-40 animate-pulse"></div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(3)].map((_, i) => (
-          <div 
-            key={i}
-            className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 min-h-[240px]"
-          >
+          <div key={i} className="bg-white/5 rounded-xl border border-white/10 p-6">
             <div className="animate-pulse">
               <div className="flex items-center justify-between mb-4">
                 <div className="h-6 bg-white/10 rounded w-32"></div>
                 <div className="h-4 w-4 bg-white/10 rounded"></div>
               </div>
-              <div className="h-4 bg-white/10 rounded w-full mb-2"></div>
-              <div className="h-4 bg-white/10 rounded w-3/4 mb-4"></div>
-              <div className="flex space-x-1 mb-4">
-                {[...Array(5)].map((_, j) => (
-                  <div key={j} className="w-2 h-2 bg-white/10 rounded-full"></div>
-                ))}
-              </div>
+              <div className="h-16 bg-white/10 rounded mb-4"></div>
               <div className="grid grid-cols-3 gap-4 mb-4">
-                {[...Array(3)].map((_, j) => (
-                  <div key={j}>
-                    <div className="h-3 bg-white/10 rounded w-16 mb-1"></div>
-                    <div className="h-4 bg-white/10 rounded w-12"></div>
-                  </div>
-                ))}
+                <div className="h-8 bg-white/10 rounded"></div>
+                <div className="h-8 bg-white/10 rounded"></div>
+                <div className="h-8 bg-white/10 rounded"></div>
               </div>
+              <div className="h-4 bg-white/10 rounded w-24"></div>
             </div>
           </div>
         ))}
