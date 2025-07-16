@@ -1,6 +1,6 @@
-// components/workspace/WorkspaceHeader.tsx - MINIMAL FIXES
-import React from 'react'
-import { ArrowLeft, Settings, Plus, Play, MoreVertical, RefreshCw } from 'lucide-react'
+// components/workspace/WorkspaceHeader.tsx - ENHANCED WITH EDIT/DELETE
+import React, { useState, useRef, useEffect } from 'react'
+import { ArrowLeft, Settings, Plus, Play, MoreVertical, RefreshCw, Edit, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatLastCheck, formatCreatedAt, formatUptime, formatResponseTime } from '@/lib/data-loader'
@@ -22,14 +22,20 @@ interface WorkspaceHeaderProps {
   }
   onRefresh?: () => void
   onAddEndpoint?: () => void
+  onEditWorkspace?: () => void
+  onDeleteWorkspace?: () => void
 }
 
 const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ 
   workspace, 
   onRefresh, 
-  onAddEndpoint 
+  onAddEndpoint,
+  onEditWorkspace,
+  onDeleteWorkspace
 }) => {
   const router = useRouter()
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   
   // Add safety checks for undefined properties
   const endpointCount = workspace.endpointCount ?? 0
@@ -40,6 +46,18 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   
   const hasEndpoints = endpointCount > 0
   const hasData = hasEndpoints && uptime !== null && avgResponseTime !== null
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -90,17 +108,38 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
     })
   }
 
-  const handleSettings = () => {
-    toast.info('Coming soon!', {
-      description: 'Workspace settings is being built',
-      duration: 3000,
-    })
-  }
-
   const handleRefresh = () => {
     if (onRefresh) {
       onRefresh()
       toast.success('Refreshed workspace data')
+    }
+  }
+
+  const handleDropdownToggle = () => {
+    setIsDropdownOpen(!isDropdownOpen)
+  }
+
+  const handleEditWorkspace = () => {
+    setIsDropdownOpen(false)
+    if (onEditWorkspace) {
+      onEditWorkspace()
+    } else {
+      toast.info('Coming soon!', {
+        description: 'Edit workspace functionality is being built',
+        duration: 3000,
+      })
+    }
+  }
+
+  const handleDeleteWorkspace = () => {
+    setIsDropdownOpen(false)
+    if (onDeleteWorkspace) {
+      onDeleteWorkspace()
+    } else {
+      toast.info('Coming soon!', {
+        description: 'Delete workspace functionality is being built',
+        duration: 3000,
+      })
     }
   }
 
@@ -203,13 +242,44 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             <span className="text-sm">Add Endpoint</span>
           </button>
 
-          <button
-            onClick={handleSettings}
-            className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all"
-            title="Workspace settings"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
+          {/* Workspace Settings Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={handleDropdownToggle}
+              className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all"
+              title="Workspace settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-white/10 rounded-lg shadow-lg z-50">
+                <div className="py-2">
+                  {/* Edit Workspace */}
+                  <button
+                    onClick={handleEditWorkspace}
+                    className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Edit Workspace</span>
+                  </button>
+
+                  {/* Divider */}
+                  <div className="border-t border-white/10 my-1" />
+
+                  {/* Delete Workspace */}
+                  <button
+                    onClick={handleDeleteWorkspace}
+                    className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Workspace</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

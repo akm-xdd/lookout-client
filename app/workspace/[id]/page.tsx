@@ -1,4 +1,4 @@
-// app/workspace/[id]/page.tsx - MINIMAL FIXES
+// app/workspace/[id]/page.tsx - ENHANCED WITH EDIT/DELETE
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'motion/react'
@@ -10,6 +10,8 @@ import WorkspaceHeader from '@/app/_components/workspace/WorkspaceHeader'
 import EndpointsTable from '@/app/_components/workspace/EndpointsTable'
 import WorkspaceChartsSection from '@/app/_components/workspace/WorkspaceChartsSection'
 import EndpointFormModal from '@/app/_components/workspace/EndpointFormModal'
+import EditWorkspaceModal from '@/app/_components/workspace/EditWorkspaceModal'
+import DeleteWorkspaceModal from '@/app/_components/workspace/DeleteWorkspaceModal'
 import { loadDashboardData, DashboardData, WorkspaceData } from '@/lib/data-loader'
 import { useRouter } from 'next/navigation'
 import { workspaceAPI, endpointAPI, APIError } from '@/lib/api-client'
@@ -53,25 +55,11 @@ export default function WorkspaceDetailPage() {
   const [workspace, setWorkspace] = useState<WorkspaceDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Modal states
   const [addEndpointModalOpen, setAddEndpointModalOpen] = useState(false)
-
-
-  // In workspace page, add this temporarily:
-useEffect(() => {
-  const handleFocus = () => console.log('🔍 Tab gained focus')
-  const handleBlur = () => console.log('😴 Tab lost focus') 
-  const handleVisibility = () => console.log('👁️ Visibility changed:', document.visibilityState)
-  
-  window.addEventListener('focus', handleFocus)
-  window.addEventListener('blur', handleBlur)
-  document.addEventListener('visibilitychange', handleVisibility)
-  
-  return () => {
-    window.removeEventListener('focus', handleFocus)
-    window.removeEventListener('blur', handleBlur)
-    document.removeEventListener('visibilitychange', handleVisibility)
-  }
-}, [])
+  const [editWorkspaceModalOpen, setEditWorkspaceModalOpen] = useState(false)
+  const [deleteWorkspaceModalOpen, setDeleteWorkspaceModalOpen] = useState(false)
 
   const loadWorkspaceData = useCallback(async () => {
     try {
@@ -95,45 +83,39 @@ useEffect(() => {
         name: endpoint.name,
         url: endpoint.url,
         method: endpoint.method,
-        status: endpoint.is_active ? 'unknown' : 'offline', // Show unknown until we have real monitoring data
-        uptime: null, // Will be calculated from check results when available
-        responseTime: null, // Will come from last check when available
-        lastCheck: null, // Will come from actual monitoring checks
+        status: endpoint.is_active ? 'unknown' : 'offline',
+        uptime: null,
+        responseTime: null,
+        lastCheck: null,
         frequency: endpoint.frequency_minutes
       }))
       
-      // Calculate workspace stats based on actual data
-      const endpointsWithData = transformedEndpoints.filter(e => e.uptime !== null)
+      // Calculate workspace stats
       const onlineEndpoints = transformedEndpoints.filter(e => e.status === 'online').length
       const warningEndpoints = transformedEndpoints.filter(e => e.status === 'warning').length
       const offlineEndpoints = transformedEndpoints.filter(e => e.status === 'offline').length
-      const unknownEndpoints = transformedEndpoints.filter(e => e.status === 'unknown').length
       
       // Determine workspace status
       let workspaceStatus: 'online' | 'warning' | 'offline' | 'unknown' = 'unknown'
       if (transformedEndpoints.length === 0) {
-        workspaceStatus = 'unknown' // No endpoints to monitor
+        workspaceStatus = 'unknown'
       } else if (offlineEndpoints > 0) {
         workspaceStatus = 'offline'
       } else if (warningEndpoints > 0) {
         workspaceStatus = 'warning'
       } else if (onlineEndpoints > 0) {
         workspaceStatus = 'online'
-      } else {
-        workspaceStatus = 'unknown' // All endpoints are unknown status
       }
       
-      // Calculate uptime only if we have real data
+      // Calculate averages
       const uptimeValues = transformedEndpoints.filter(e => e.uptime !== null).map(e => e.uptime!)
       const avgUptime = uptimeValues.length > 0 ? 
         uptimeValues.reduce((sum, uptime) => sum + uptime, 0) / uptimeValues.length : null
       
-      // Calculate response time only if we have real data
       const responseTimeValues = transformedEndpoints.filter(e => e.responseTime !== null).map(e => e.responseTime!)
       const avgResponseTime = responseTimeValues.length > 0 ?
         responseTimeValues.reduce((sum, time) => sum + time, 0) / responseTimeValues.length : null
       
-      // Get most recent check time if available
       const checkTimes = transformedEndpoints.filter(e => e.lastCheck !== null).map(e => e.lastCheck!)
       const lastCheck = checkTimes.length > 0 ?
         checkTimes.reduce((latest, current) => 
@@ -149,7 +131,7 @@ useEffect(() => {
         uptime: avgUptime,
         avgResponseTime: avgResponseTime,
         lastCheck: lastCheck,
-        activeIncidents: offlineEndpoints, // Only count confirmed offline endpoints
+        activeIncidents: offlineEndpoints,
         endpoints: transformedEndpoints
       }
       
@@ -174,18 +156,41 @@ useEffect(() => {
     }
   }, [workspaceId])
 
+  // Handler functions for workspace actions
+  const handleEditWorkspace = () => {
+    setEditWorkspaceModalOpen(true)
+  }
+
+  const handleDeleteWorkspace = () => {
+    setDeleteWorkspaceModalOpen(true)
+  }
+
+  const handleWorkspaceEdited = () => {
+    setEditWorkspaceModalOpen(false)
+    loadWorkspaceData() // Refresh workspace data
+    toast.success('Workspace updated successfully!')
+  }
+
+  const handleWorkspaceDeleted = () => {
+    setDeleteWorkspaceModalOpen(false)
+    toast.success('Workspace deleted successfully!')
+    // Redirect to dashboard after successful deletion
+    router.push('/dashboard')
+  }
+
+  // Existing endpoint handlers
   const handleAddEndpoint = () => {
     setAddEndpointModalOpen(true)
   }
 
   const handleEndpointAdded = () => {
     setAddEndpointModalOpen(false)
-    loadWorkspaceData() // Refresh data
+    loadWorkspaceData()
     toast.success('Endpoint added successfully!')
   }
 
   const handleEndpointDeleted = () => {
-    loadWorkspaceData() // Refresh data
+    loadWorkspaceData()
     toast.success('Endpoint deleted successfully!')
   }
 
@@ -272,7 +277,7 @@ useEffect(() => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Workspace Header */}
+            {/* Workspace Header with Edit/Delete handlers */}
             <WorkspaceHeader
               workspace={{
                 ...workspace,
@@ -280,6 +285,8 @@ useEffect(() => {
               }}
               onRefresh={loadWorkspaceData}
               onAddEndpoint={handleAddEndpoint}
+              onEditWorkspace={handleEditWorkspace}
+              onDeleteWorkspace={handleDeleteWorkspace}
             />
 
             {/* Main Content */}
@@ -301,14 +308,39 @@ useEffect(() => {
         </div>
 
         {/* Add Endpoint Modal */}
-        {addEndpointModalOpen && (
-          <EndpointFormModal
-            workspaceId={workspaceId}
-            isOpen={addEndpointModalOpen}
-            onClose={() => setAddEndpointModalOpen(false)}
-            onSuccess={handleEndpointAdded}
-          />
-        )}
+        <EndpointFormModal
+          workspaceId={workspaceId}
+          maxEndpoints={workspace.maxEndpoints}
+          currentEndpoints={workspace.endpointCount}
+          isOpen={addEndpointModalOpen}
+          onClose={() => setAddEndpointModalOpen(false)}
+          onSuccess={handleEndpointAdded}
+        />
+
+        {/* Edit Workspace Modal */}
+        <EditWorkspaceModal
+          isOpen={editWorkspaceModalOpen}
+          onClose={() => setEditWorkspaceModalOpen(false)}
+          onSuccess={handleWorkspaceEdited}
+          workspace={workspace ? {
+            id: workspace.id,
+            name: workspace.name,
+            description: workspace.description
+          } : null}
+        />
+
+        {/* Delete Workspace Modal */}
+        <DeleteWorkspaceModal
+          isOpen={deleteWorkspaceModalOpen}
+          onClose={() => setDeleteWorkspaceModalOpen(false)}
+          onSuccess={handleWorkspaceDeleted}
+          workspace={workspace ? {
+            id: workspace.id,
+            name: workspace.name,
+            description: workspace.description,
+            endpointCount: workspace.endpointCount
+          } : null}
+        />
       </div>
     </ProtectedRoute>
   )

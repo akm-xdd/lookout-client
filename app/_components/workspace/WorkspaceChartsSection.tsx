@@ -1,4 +1,4 @@
-// components/workspace/WorkspaceChartsSection.tsx - MINIMAL FIXES
+// components/workspace/WorkspaceChartsSection.tsx - FIXED HEALTH SUMMARY LOGIC
 import React from 'react'
 import { formatUptime, formatResponseTime } from '@/lib/data-loader'
 
@@ -29,6 +29,17 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
 
   const hasEndpoints = endpointCount > 0
   const hasData = hasEndpoints && uptime !== null && avgResponseTime !== null
+
+  // Calculate actual endpoint statuses
+  const onlineEndpoints = endpoints.filter((e: any) => e.status === 'online').length
+  const warningEndpoints = endpoints.filter((e: any) => e.status === 'warning').length
+  const offlineEndpoints = endpoints.filter((e: any) => e.status === 'offline').length
+  const unknownEndpoints = endpoints.filter((e: any) => e.status === 'unknown').length
+
+  // Only show actual health score if we have real monitoring data
+  const hasMonitoringData = endpoints.some((e: any) => 
+    e.status === 'online' || e.status === 'offline' || e.status === 'warning'
+  )
 
   // Don't show charts if no endpoints
   if (endpointCount === 0) {
@@ -69,7 +80,6 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
     )
   }
 
-  // TODO: When we have endpoints, show real charts
   return (
     <div className={`space-y-6 ${className}`}>
       <div>
@@ -114,7 +124,7 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Health Summary - Show current workspace stats */}
+        {/* Health Summary - FIXED LOGIC */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold mb-1">Health Summary</h3>
@@ -158,17 +168,19 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Endpoints Online</span>
               <span className="font-semibold text-white">
-                {endpoints.filter((e: any) => e.status === 'online').length}/{endpointCount}
+                {hasMonitoringData ? `${onlineEndpoints}/${endpointCount}` : `—/${endpointCount}`}
               </span>
             </div>
             
             <div className="flex items-center justify-between pt-2 border-t border-white/10">
               <span className="text-gray-400">Health Score</span>
               <span className={`font-bold text-lg ${
-                endpoints.filter((e: any) => e.status === 'online').length === endpointCount ? 'text-green-400' :
-                endpoints.filter((e: any) => e.status === 'offline').length === 0 ? 'text-yellow-400' : 'text-red-400'
+                !hasMonitoringData ? 'text-gray-400' :
+                onlineEndpoints === endpointCount ? 'text-green-400' :
+                offlineEndpoints === 0 ? 'text-yellow-400' : 'text-red-400'
               }`}>
-                {endpointCount > 0 ? `${Math.round((endpoints.filter((e: any) => e.status === 'online').length / endpointCount) * 100)}%` : '—'}
+                {!hasMonitoringData ? '—' : 
+                 endpointCount > 0 ? `${Math.round((onlineEndpoints / endpointCount) * 100)}%` : '—'}
               </span>
             </div>
           </div>

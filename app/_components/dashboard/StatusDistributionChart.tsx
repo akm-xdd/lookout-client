@@ -1,4 +1,4 @@
-// components/dashboard/StatusDistributionChart.tsx - FIXED TOOLTIPS
+// components/dashboard/StatusDistributionChart.tsx - FIXED FOR NO MONITORING DATA
 "use client"
 
 import { Pie, PieChart, Cell } from "recharts"
@@ -34,38 +34,16 @@ const StatusDistributionChart: React.FC<StatusDistributionChartProps> = ({
   data, 
   className = "" 
 }) => {
-  const stats = getDashboardStats(data)!
-
-  
-  
-  // Create chart data with proper structure for tooltips
-  const chartData = [
-    {
-      online: stats.onlineEndpoints,
-      fill: chartConfig.online.color,
-    },
-    {
-      warning: stats.warningEndpoints,
-      fill: chartConfig.warning.color,
-    },
-    {
-      offline: stats.offlineEndpoints,
-      fill: chartConfig.offline.color,
-    },
-  ].filter((item, index) => {
-    const keys = ['online', 'warning', 'offline']
-    return item[keys[index] as keyof typeof item] > 0
-  })
-
-  // For the legend, we need the actual counts
-  const legendData = [
-    { status: 'online', count: stats.onlineEndpoints, label: 'Online', color: chartConfig.online.color },
-    { status: 'warning', count: stats.warningEndpoints, label: 'Warning', color: chartConfig.warning.color },
-    { status: 'offline', count: stats.offlineEndpoints, label: 'Offline', color: chartConfig.offline.color },
-  ].filter(item => item.count > 0)
-
+  const stats = getDashboardStats(data)
   const totalEndpoints = stats.totalEndpoints
 
+  // Check if we have any endpoints with actual monitoring data
+  const allEndpoints = data.workspaces.flatMap(ws => ws.endpoints || [])
+  const hasMonitoringData = allEndpoints.some(endpoint => 
+    endpoint.status === 'online' || endpoint.status === 'offline' || endpoint.status === 'warning'
+  )
+
+  // Don't show chart if no endpoints exist
   if (totalEndpoints === 0) {
     return (
       <div className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 ${className}`}>
@@ -74,17 +52,80 @@ const StatusDistributionChart: React.FC<StatusDistributionChartProps> = ({
           <p className="text-gray-400 text-sm">Distribution overview</p>
         </div>
         <div className="flex items-center justify-center h-[200px] text-gray-500">
-          No endpoints to display
+          <div className="text-center">
+            <div className="text-4xl mb-2">🎯</div>
+            <p className="text-sm">Add endpoints to see status distribution</p>
+          </div>
         </div>
       </div>
     )
   }
 
+  // Show "No monitoring data" state if endpoints exist but no monitoring has started
+  if (!hasMonitoringData) {
+    return (
+      <div className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 ${className}`}>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold mb-1">Endpoint Status</h3>
+          <p className="text-gray-400 text-sm">{totalEndpoints} total endpoint{totalEndpoints !== 1 ? 's' : ''}</p>
+        </div>
+        
+        <div className="flex items-center space-x-6">
+          {/* Placeholder Chart Area */}
+          <div className="flex-shrink-0 w-[160px] h-[160px] flex items-center justify-center">
+            <div className="w-24 h-24 border-4 border-gray-600 border-dashed rounded-full flex items-center justify-center">
+              <div className="text-2xl">📊</div>
+            </div>
+          </div>
+          
+          {/* Status Information */}
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 rounded-full bg-gray-500" />
+                <span className="text-sm text-gray-300">Configured</span>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-medium">{totalEndpoints}</div>
+                <div className="text-xs text-gray-400">100%</div>
+              </div>
+            </div>
+            
+            {/* Monitoring Status */}
+            <div className="pt-3 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Status</span>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-400">Unknown</div>
+                  <div className="text-xs text-gray-500">No monitoring data</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Next Steps */}
+            <div className="pt-2">
+              <div className="text-xs text-gray-500">
+                Monitoring will start automatically once configured
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show actual chart only when we have real monitoring data
+  const legendData = [
+    { status: 'online', count: stats.onlineEndpoints, label: 'Online', color: chartConfig.online.color },
+    { status: 'warning', count: stats.warningEndpoints, label: 'Warning', color: chartConfig.warning.color },
+    { status: 'offline', count: stats.offlineEndpoints, label: 'Offline', color: chartConfig.offline.color },
+  ].filter(item => item.count > 0)
+
   return (
     <div className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 ${className}`}>
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-1">Endpoint Status</h3>
-        <p className="text-gray-400 text-sm">{totalEndpoints} total endpoints</p>
+        <p className="text-gray-400 text-sm">{totalEndpoints} total endpoint{totalEndpoints !== 1 ? 's' : ''}</p>
       </div>
       
       <div className="flex items-center space-x-6">
