@@ -1,6 +1,5 @@
-// app/dashboard/page.tsx - UPDATED WITH DATA REFRESH
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "motion/react";
 import { Settings, LogOut, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -12,68 +11,89 @@ import ChartsSection from "../_components/dashboard/ChartsSection";
 import WorkspacesSection from "../_components/dashboard/WorkspacesSection";
 import { loadDashboardData, DashboardData } from "@/lib/data-loader";
 
-
 export default function DashboardPage() {
-  const { user, signOut } = useAuth()
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { user, signOut } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load dashboard data
+  useEffect(() => {
+    // if route is dashboard?success=true, show success toast
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("success") === "oauth") {
+      // reset search params to avoid showing toast again
+      window.history.replaceState({}, "", window.location.pathname);
+      toast.success("Welcome back!");
+    }
+  }, []);
+
+  // Track if data has been loaded to prevent unnecessary refetches
+  const hasLoadedData = useRef(false);
+
+  // Load data function - keep user dependency but use user.id to prevent recreations
   const loadData = useCallback(async () => {
-    if (!user) return
-    
+    if (!user) return;
+
     try {
-      setLoading(true)
-      setError(null)
-      const dashData = await loadDashboardData()
-      
+      setLoading(true);
+      setError(null);
+      console.log("🔄 Loading dashboard data...");
+
+      const dashData = await loadDashboardData();
+
       // Merge user email from auth
       if (dashData && user?.email) {
-        dashData.user.email = user.email
-        dashData.user.id = user.id
+        dashData.user.email = user.email;
+        dashData.user.id = user.id;
       }
-      
-      setDashboardData(dashData)
+
+      setDashboardData(dashData);
+      hasLoadedData.current = true;
     } catch (loadError) {
-      console.error('Failed to load dashboard data:', loadError)
-      const errorMessage = loadError instanceof Error ? loadError.message : 'Unknown error'
-      setError(errorMessage)
-      
-      toast.error('Failed to load dashboard', {
+      console.error("Failed to load dashboard data:", loadError);
+      const errorMessage =
+        loadError instanceof Error ? loadError.message : "Unknown error";
+      setError(errorMessage);
+
+      toast.error("Failed to load dashboard", {
         description: errorMessage,
         duration: 5000,
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [user])
+  }, [user?.id, user?.email]); // Only depend on stable user properties
 
-  // Initial data load
+  // Load data only once when user becomes available
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    if (user && !hasLoadedData.current) {
+      loadData();
+    }
+  }, [user, loadData]);
 
   // Handle data refresh (for when workspaces are created/updated)
   const handleDataRefresh = useCallback(() => {
-    console.log('🔄 Refreshing dashboard data...')
-    loadData()
-  }, [loadData])
+    console.log("🔄 Manual refresh triggered");
+    loadData();
+  }, [loadData]);
 
   const handleSignOut = async () => {
-    await signOut()
-  }
+    await signOut();
+  };
 
   const handleSettings = () => {
-    toast.info('Settings coming soon!', {
-      description: 'User settings page is being built',
+    toast.info("Settings coming soon!", {
+      description: "User settings page is being built",
       duration: 3000,
-    })
-  }
+    });
+  };
 
   const handleRetry = () => {
-    loadData()
-  }
+    hasLoadedData.current = false; // Reset the flag to allow retry
+    loadData();
+  };
 
   // Error state
   if (error && !loading) {
@@ -81,15 +101,15 @@ export default function DashboardPage() {
       <ProtectedRoute>
         <div className="min-h-screen bg-black text-white">
           <AnimatedBackground particleCount={20} />
-          
+
           <main className="relative z-10 px-6 py-20">
             <div className="max-w-2xl mx-auto text-center">
               <div className="mb-8">
                 <div className="text-6xl mb-4">⚠️</div>
-                <h1 className="text-3xl font-bold mb-4">Unable to Load Dashboard</h1>
-                <p className="text-gray-400 text-lg mb-8">
-                  {error}
-                </p>
+                <h1 className="text-3xl font-bold mb-4">
+                  Unable to Load Dashboard
+                </h1>
+                <p className="text-gray-400 text-lg mb-8">{error}</p>
                 <div className="space-y-4">
                   <button
                     onClick={handleRetry}
@@ -107,7 +127,7 @@ export default function DashboardPage() {
           </main>
         </div>
       </ProtectedRoute>
-    )
+    );
   }
 
   return (
@@ -138,7 +158,9 @@ export default function DashboardPage() {
                 className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
                 title="Refresh data"
               >
-                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
+                />
               </button>
               <button
                 onClick={handleSettings}
@@ -189,16 +211,15 @@ export default function DashboardPage() {
 
             {/* Workspaces Section */}
             {dashboardData && (
-              <WorkspacesSection 
-                data={dashboardData} 
+              <WorkspacesSection
+                data={dashboardData}
                 loading={loading}
                 onRefresh={handleDataRefresh}
               />
             )}
-
           </div>
         </main>
       </motion.div>
     </ProtectedRoute>
-  )
+  );
 }
