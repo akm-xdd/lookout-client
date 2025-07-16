@@ -18,7 +18,7 @@ const Footer: React.FC = () => {
           <div className="flex items-center space-x-6 text-sm text-gray-400">
             <span>© {currentYear} LookOut</span>
             <span>•</span>
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <span>•</span>
             <a href="#" className="hover:text-white transition-colors">Terms</a>
             <span>•</span>
