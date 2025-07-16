@@ -156,3 +156,9 @@ export const healthAPI = {
 }
 
 export { APIError }
+
+export const dashboardAPI = {
+  async getDashboard() {
+    return apiCall('/api/dashboard')
+  }
+}

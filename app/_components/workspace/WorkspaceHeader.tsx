@@ -1,9 +1,9 @@
-// components/workspace/WorkspaceHeader.tsx - FIXED VERSION
+// components/workspace/WorkspaceHeader.tsx - MINIMAL FIXES
 import React from 'react'
 import { ArrowLeft, Settings, Plus, Play, MoreVertical, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { formatLastCheck, formatCreatedAt } from '@/lib/data-loader'
+import { formatLastCheck, formatCreatedAt, formatUptime, formatResponseTime } from '@/lib/data-loader'
 
 interface WorkspaceHeaderProps {
   workspace: {
@@ -12,10 +12,10 @@ interface WorkspaceHeaderProps {
     description: string
     endpointCount: number
     maxEndpoints: number
-    status: 'online' | 'warning' | 'offline'
-    uptime: number
-    avgResponseTime: number
-    lastCheck: string
+    status: 'online' | 'warning' | 'offline' | 'unknown'
+    uptime: number | null
+    avgResponseTime: number | null
+    lastCheck: string | null
     activeIncidents: number
     createdAt: string
     endpoints: Array<{ name: string; status: 'online' | 'warning' | 'offline' | string }>
@@ -35,16 +35,18 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   const endpointCount = workspace.endpointCount ?? 0
   const maxEndpoints = workspace.maxEndpoints ?? 7
   const endpoints = workspace.endpoints ?? []
-  const uptime = workspace.uptime ?? 100
-  const avgResponseTime = workspace.avgResponseTime ?? 0
+  const uptime = workspace.uptime
+  const avgResponseTime = workspace.avgResponseTime
   
   const hasEndpoints = endpointCount > 0
+  const hasData = hasEndpoints && uptime !== null && avgResponseTime !== null
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'online': return 'text-green-400 bg-green-400/20 border-green-400/30'
       case 'warning': return 'text-yellow-400 bg-yellow-400/20 border-yellow-400/30'
       case 'offline': return 'text-red-400 bg-red-400/20 border-red-400/30'
+      case 'unknown': return 'text-gray-400 bg-gray-400/20 border-gray-400/30'
       default: return 'text-gray-400 bg-gray-400/20 border-gray-400/30'
     }
   }
@@ -54,6 +56,7 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
       case 'online': return '●'
       case 'warning': return '⚠'
       case 'offline': return '●'
+      case 'unknown': return '○'
       default: return '○'
     }
   }
@@ -138,19 +141,19 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
               </span>
             </div>
 
-            {hasEndpoints ? (
+            {hasData ? (
               <>
                 <div>
                   <span className="text-gray-400">Uptime: </span>
-                  <span className={`font-medium ${uptime >= 99 ? 'text-green-400' : uptime >= 95 ? 'text-yellow-400' : 'text-red-400'}`}>
-                    {uptime.toFixed(1)}%
+                  <span className={`font-medium ${uptime! >= 99 ? 'text-green-400' : uptime! >= 95 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    {formatUptime(uptime)}
                   </span>
                 </div>
 
                 <div>
                   <span className="text-gray-400">Avg Response: </span>
-                  <span className={`font-medium ${avgResponseTime < 500 ? 'text-green-400' : avgResponseTime < 1000 ? 'text-yellow-400' : 'text-red-400'}`}>
-                    {avgResponseTime}ms
+                  <span className={`font-medium ${avgResponseTime! < 500 ? 'text-green-400' : avgResponseTime! < 1000 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    {formatResponseTime(avgResponseTime)}
                   </span>
                 </div>
 
@@ -186,18 +189,18 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             onClick={handleTestAll}
             disabled={!hasEndpoints}
             title={hasEndpoints ? 'Test all endpoints' : 'No endpoints to test'}
-            className="flex items-center space-x-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center space-x-2 p-2 bg-blue-500/20 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-all disabled:opacity-50 disabled:hover:bg-blue-500/20"
           >
             <Play className="w-4 h-4" />
-            <span>Test All</span>
+            <span className="text-sm">Test All</span>
           </button>
 
           <button
             onClick={handleAddEndpoint}
-            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all"
+            className="flex items-center space-x-2 p-2 bg-green-500/20 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Endpoint</span>
+            <span className="text-sm">Add Endpoint</span>
           </button>
 
           <button
@@ -207,57 +210,8 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           >
             <Settings className="w-4 h-4" />
           </button>
-
-          <button
-            className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all"
-            title="More options"
-          >
-            <MoreVertical className="w-4 h-4" />
-          </button>
         </div>
       </div>
-
-      {/* Endpoint Status Overview */}
-      {hasEndpoints ? (
-        <div className="flex items-center space-x-4">
-          <span className="text-gray-400 text-sm">Endpoints:</span>
-          <div className="flex items-center space-x-1">
-            {endpoints?.slice(0, 7).map((endpoint, i) => (
-              <div
-                key={endpoint.id || i}
-                className={`w-3 h-3 rounded-full ${
-                  endpoint.status === 'online' ? 'bg-green-400' :
-                  endpoint.status === 'warning' ? 'bg-yellow-400' :
-                  endpoint.status === 'offline' ? 'bg-red-400' : 'bg-gray-400'
-                }`}
-                title={`${endpoint.name}: ${endpoint.status}`}
-              />
-            ))}
-            {endpointCount < maxEndpoints && (
-              <button
-                onClick={handleAddEndpoint}
-                className="w-3 h-3 border-2 border-dashed border-gray-500 rounded-full hover:border-blue-400 transition-colors"
-                title="Add endpoint"
-              />
-            )}
-          </div>
-          <span className="text-gray-500 text-xs">
-            {endpoints.filter(e => e.status === 'online').length} online,{' '}
-            {endpoints.filter(e => e.status === 'warning').length} warning,{' '}
-            {endpoints.filter(e => e.status === 'offline').length} offline
-          </span>
-        </div>
-      ) : (
-        <div className="flex items-center space-x-4">
-          <span className="text-gray-400 text-sm">No endpoints configured</span>
-          <button
-            onClick={handleAddEndpoint}
-            className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
-          >
-            Add your first endpoint →
-          </button>
-        </div>
-      )}
     </div>
   )
 }

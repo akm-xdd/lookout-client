@@ -17,7 +17,7 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ data, loading = false }) 
   }
 
   // Don't show charts if no workspaces OR no endpoints
-  const totalEndpoints = data.workspaces.reduce((sum, ws) => sum + ws.endpointCount, 0)
+  const totalEndpoints = data.workspaces?.reduce((sum, ws) => sum + ws.endpointCount, 0)
   
   if (data.workspaces.length === 0 || totalEndpoints === 0) {
     return null

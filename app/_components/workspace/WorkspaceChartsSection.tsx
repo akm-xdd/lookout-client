@@ -1,12 +1,14 @@
+// components/workspace/WorkspaceChartsSection.tsx - MINIMAL FIXES
 import React from 'react'
+import { formatUptime, formatResponseTime } from '@/lib/data-loader'
 
 interface WorkspaceChartsSectionProps {
   workspaceData: {
     id: string
     name: string
     endpointCount?: number
-    uptime?: number
-    avgResponseTime?: number
+    uptime?: number | null
+    avgResponseTime?: number | null
     activeIncidents?: number
     endpoints?: any[]
     endpointData?: any[]
@@ -20,10 +22,13 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
 }) => {
   // Add safety checks for all properties
   const endpointCount = workspaceData.endpointCount ?? 0
-  const uptime = workspaceData.uptime ?? 100
-  const avgResponseTime = workspaceData.avgResponseTime ?? 0
+  const uptime = workspaceData.uptime
+  const avgResponseTime = workspaceData.avgResponseTime
   const activeIncidents = workspaceData.activeIncidents ?? 0
   const endpoints = workspaceData.endpoints ?? workspaceData.endpointData ?? []
+
+  const hasEndpoints = endpointCount > 0
+  const hasData = hasEndpoints && uptime !== null && avgResponseTime !== null
 
   // Don't show charts if no endpoints
   if (endpointCount === 0) {
@@ -120,20 +125,24 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Overall Uptime</span>
               <span className={`font-semibold ${
-                uptime >= 99 ? 'text-green-400' :
-                uptime >= 95 ? 'text-yellow-400' : 'text-red-400'
+                hasData ? (
+                  uptime! >= 99 ? 'text-green-400' :
+                  uptime! >= 95 ? 'text-yellow-400' : 'text-red-400'
+                ) : 'text-gray-400'
               }`}>
-                {uptime.toFixed(1)}%
+                {hasData ? formatUptime(uptime) : '—'}
               </span>
             </div>
             
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Average Response</span>
               <span className={`font-semibold ${
-                avgResponseTime < 500 ? 'text-green-400' :
-                avgResponseTime < 1000 ? 'text-yellow-400' : 'text-red-400'
+                hasData ? (
+                  avgResponseTime! < 500 ? 'text-green-400' :
+                  avgResponseTime! < 1000 ? 'text-yellow-400' : 'text-red-400'
+                ) : 'text-gray-400'
               }`}>
-                {avgResponseTime}ms
+                {hasData ? formatResponseTime(avgResponseTime) : '—'}
               </span>
             </div>
             
@@ -159,25 +168,26 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
                 endpoints.filter((e: any) => e.status === 'online').length === endpointCount ? 'text-green-400' :
                 endpoints.filter((e: any) => e.status === 'offline').length === 0 ? 'text-yellow-400' : 'text-red-400'
               }`}>
-                {endpointCount > 0 ? 
-                  Math.round((endpoints.filter((e: any) => e.status === 'online').length / endpointCount) * 100) : 100}%
+                {endpointCount > 0 ? `${Math.round((endpoints.filter((e: any) => e.status === 'online').length / endpointCount) * 100)}%` : '—'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Recent Activity - TODO: Add real activity when we have monitoring */}
+        {/* Recent Activity - TODO: Add real activity when we have monitoring data */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold mb-1">Recent Activity</h3>
-            <p className="text-gray-400 text-sm">Latest checks and incidents</p>
+            <p className="text-gray-400 text-sm">Latest monitoring checks</p>
           </div>
           
           <div className="flex items-center justify-center h-[200px] text-gray-500">
             <div className="text-center">
               <div className="text-4xl mb-2">🔄</div>
-              <p className="text-sm">Recent activity will appear here</p>
-              <p className="text-xs text-gray-600 mt-1">Activity from endpoint monitoring</p>
+              <p className="text-sm">Activity feed will appear here</p>
+              <p className="text-xs text-gray-600 mt-1">
+                {hasData ? 'Monitoring data coming soon' : 'No monitoring data available'}
+              </p>
             </div>
           </div>
         </div>

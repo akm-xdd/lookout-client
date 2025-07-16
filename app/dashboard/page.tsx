@@ -43,6 +43,10 @@ export default function DashboardPage() {
 
       const dashData = await loadDashboardData();
 
+      console.log("Dashboard data:", dashboardData);
+      console.log("Workspaces:", dashboardData?.workspaces);
+      console.log("Overview:", dashboardData?.overview);
+
       // Merge user email from auth
       if (dashData && user?.email) {
         dashData.user.email = user.email;

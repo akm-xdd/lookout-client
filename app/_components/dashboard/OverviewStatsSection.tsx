@@ -1,4 +1,4 @@
-// components/dashboard/OverviewStatsSection.tsx
+// components/dashboard/OverviewStatsSection.tsx - MINIMAL FIXES
 import React from 'react'
 import { Layers, Globe, TrendingUp, AlertTriangle } from 'lucide-react'
 import OverviewStatCard from './OverviewStatCard'
@@ -47,13 +47,13 @@ const OverviewStatsSection: React.FC<OverviewStatsSectionProps> = ({
         }}
       />
 
-      {/* Overall Uptime */}
+      {/* Overall Uptime - FIXED TO HANDLE NULL VALUES */}
       <OverviewStatCard
         title="Overall Uptime"
-        value={stats.totalEndpoints === 0 ? '--' : `${stats.avgUptime.toFixed(1)}%`}
-        subtitle={stats.totalEndpoints === 0 ? 'No data yet' : 'Last 30 days'}
+        value={stats.totalEndpoints === 0 || stats.avgUptime === null ? '—' : `${stats.avgUptime.toFixed(1)}%`}
+        subtitle={stats.totalEndpoints === 0 ? 'No data yet' : stats.avgUptime === null ? 'No monitoring data' : 'Last 30 days'}
         icon={TrendingUp}
-        color={stats.avgUptime >= 99 ? 'green' : stats.avgUptime >= 95 ? 'yellow' : 'red'}
+        color={stats.avgUptime === null ? 'gray' : (stats.avgUptime >= 99 ? 'green' : stats.avgUptime >= 95 ? 'yellow' : 'red')}
       />
 
       {/* Active Incidents */}

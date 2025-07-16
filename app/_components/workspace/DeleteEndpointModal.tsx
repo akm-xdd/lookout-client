@@ -1,4 +1,3 @@
-// components/workspace/DeleteEndpointModal.tsx
 import React, { useState } from 'react'
 import { X, Trash2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
@@ -32,6 +31,7 @@ const DeleteEndpointModal: React.FC<DeleteEndpointModalProps> = ({
     setLoading(true)
     
     try {
+      // DELETE returns null on success (204 status), which is expected
       await endpointAPI.deleteEndpoint(workspaceId, endpoint.id)
       
       toast.success('Endpoint deleted', {
@@ -43,6 +43,8 @@ const DeleteEndpointModal: React.FC<DeleteEndpointModalProps> = ({
       onSuccess()
       
     } catch (error) {
+      console.error('Delete endpoint error:', error)
+      
       if (error instanceof APIError) {
         toast.error('Failed to delete endpoint', {
           description: error.message,

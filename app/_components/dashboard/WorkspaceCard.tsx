@@ -1,4 +1,4 @@
-// components/dashboard/WorkspaceCard.tsx - FIXED VERSION
+// components/dashboard/WorkspaceCard.tsx - MINIMAL FIXES
 import React from "react";
 import { MoreVertical, Clock, AlertCircle } from "lucide-react";
 import {
@@ -26,12 +26,13 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   const endpointCount = workspace.endpointCount ?? 0;
   const maxEndpoints = workspace.maxEndpoints ?? 7;
   const endpoints = workspace.endpoints ?? [];
-  const uptime = workspace.uptime ?? 100;
-  const avgResponseTime = workspace.avgResponseTime ?? 0;
+  const uptime = workspace.uptime;
+  const avgResponseTime = workspace.avgResponseTime;
   const activeIncidents = workspace.activeIncidents ?? 0;
-  const status = workspace.status ?? 'online';
+  const status = workspace.status ?? 'unknown';
   
   const hasEndpoints = endpointCount > 0;
+  const hasData = hasEndpoints && uptime !== null && avgResponseTime !== null;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -41,6 +42,8 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         return "text-yellow-400 bg-yellow-400/20";
       case "offline":
         return "text-red-400 bg-red-400/20";
+      case "unknown":
+        return "text-gray-400 bg-gray-400/20";
       default:
         return "text-gray-400 bg-gray-400/20";
     }
@@ -54,6 +57,8 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         return "⚠";
       case "offline":
         return "●";
+      case "unknown":
+        return "○";
       default:
         return "○";
     }
@@ -72,7 +77,7 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
               {workspace.name}
             </h3>
 
-            {/* Only show if there's at least one endpoint */}
+            {/* Only show status if there's at least one endpoint */}
             {hasEndpoints && (
               <div
                 className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
@@ -122,7 +127,7 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         )}
       </div>
 
-      {/* Metrics Grid (endpoints always shown; uptime/response only if endpoints) */}
+      {/* Metrics Grid (endpoints always shown; uptime/response only if data exists) */}
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <div className="text-sm text-gray-400 mb-1">Endpoints</div>
@@ -133,13 +138,13 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         <div>
           <div className="text-sm text-gray-400 mb-1">Uptime</div>
           <div className="text-white font-medium">
-            {hasEndpoints ? formatUptime(uptime) : "—"}
+            {hasData ? formatUptime(uptime) : "—"}
           </div>
         </div>
         <div>
           <div className="text-sm text-gray-400 mb-1">Response</div>
           <div className="text-white font-medium">
-            {hasEndpoints ? formatResponseTime(avgResponseTime) : "—"}
+            {hasData ? formatResponseTime(avgResponseTime) : "—"}
           </div>
         </div>
       </div>
@@ -149,8 +154,8 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         <div className="flex items-center space-x-1">
           <Clock className="w-3 h-3" />
           <span>
-            {hasEndpoints
-              ? formatLastCheck(workspace.lastCheck || workspace.created_at)
+            {hasData && workspace.lastCheck
+              ? formatLastCheck(workspace.lastCheck)
               : formatCreatedAt(workspace.createdAt || workspace.created_at)}
           </span>
         </div>

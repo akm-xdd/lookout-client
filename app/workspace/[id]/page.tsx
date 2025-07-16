@@ -1,3 +1,4 @@
+// app/workspace/[id]/page.tsx - MINIMAL FIXES
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'motion/react'
@@ -20,9 +21,9 @@ interface EndpointData {
   url: string
   method: string
   status: 'online' | 'warning' | 'offline' | 'unknown'
-  uptime: number
-  responseTime: number
-  lastCheck: string
+  uptime: number | null
+  responseTime: number | null
+  lastCheck: string | null
   frequency: number
 }
 
@@ -36,31 +37,13 @@ interface WorkspaceDetailData {
   // Add computed fields for UI
   endpointCount: number
   maxEndpoints: number
-  status: 'online' | 'warning' | 'offline'
-  uptime: number
-  avgResponseTime: number
-  lastCheck: string
+  status: 'online' | 'warning' | 'offline' | 'unknown'
+  uptime: number | null
+  avgResponseTime: number | null
+  lastCheck: string | null
   activeIncidents: number
   endpoints: EndpointData[]
 }
-
-// Create a safe default workspace object
-const createDefaultWorkspace = (workspaceData: any): WorkspaceDetailData => ({
-  id: workspaceData?.id || '',
-  name: workspaceData?.name || 'Unknown Workspace',
-  description: workspaceData?.description || '',
-  created_at: workspaceData?.created_at || new Date().toISOString(),
-  updated_at: workspaceData?.updated_at || new Date().toISOString(),
-  user_id: workspaceData?.user_id || '',
-  endpointCount: 0,
-  maxEndpoints: 7,
-  status: 'online',
-  uptime: 100,
-  avgResponseTime: 0,
-  lastCheck: new Date().toISOString(),
-  activeIncidents: 0,
-  endpoints: []
-})
 
 export default function WorkspaceDetailPage() {
   const params = useParams()
@@ -71,6 +54,24 @@ export default function WorkspaceDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [addEndpointModalOpen, setAddEndpointModalOpen] = useState(false)
+
+
+  // In workspace page, add this temporarily:
+useEffect(() => {
+  const handleFocus = () => console.log('🔍 Tab gained focus')
+  const handleBlur = () => console.log('😴 Tab lost focus') 
+  const handleVisibility = () => console.log('👁️ Visibility changed:', document.visibilityState)
+  
+  window.addEventListener('focus', handleFocus)
+  window.addEventListener('blur', handleBlur)
+  document.addEventListener('visibilitychange', handleVisibility)
+  
+  return () => {
+    window.removeEventListener('focus', handleFocus)
+    window.removeEventListener('blur', handleBlur)
+    document.removeEventListener('visibilitychange', handleVisibility)
+  }
+}, [])
 
   const loadWorkspaceData = useCallback(async () => {
     try {
@@ -88,54 +89,69 @@ export default function WorkspaceDetailPage() {
         return
       }
       
-      // Transform endpoints data with safety checks
+      // Transform endpoints data with null handling
       const transformedEndpoints: EndpointData[] = (endpointsData || []).map((endpoint: any) => ({
-        id: endpoint.id || '',
-        name: endpoint.name || 'Unknown Endpoint',
-        url: endpoint.url || '',
-        method: endpoint.method || 'GET',
-        status: (endpoint.is_active ? 'online' : 'offline') as 'online' | 'offline', // TODO: get real status from monitoring
-        uptime: 100, // TODO: calculate from check results
-        responseTime: 0, // TODO: get from last check
-        lastCheck: endpoint.created_at || new Date().toISOString(), // TODO: get from last check
-        frequency: endpoint.frequency_minutes || 5
+        id: endpoint.id,
+        name: endpoint.name,
+        url: endpoint.url,
+        method: endpoint.method,
+        status: endpoint.is_active ? 'unknown' : 'offline', // Show unknown until we have real monitoring data
+        uptime: null, // Will be calculated from check results when available
+        responseTime: null, // Will come from last check when available
+        lastCheck: null, // Will come from actual monitoring checks
+        frequency: endpoint.frequency_minutes
       }))
       
-      // Calculate workspace stats with safety checks
+      // Calculate workspace stats based on actual data
+      const endpointsWithData = transformedEndpoints.filter(e => e.uptime !== null)
       const onlineEndpoints = transformedEndpoints.filter(e => e.status === 'online').length
       const warningEndpoints = transformedEndpoints.filter(e => e.status === 'warning').length
       const offlineEndpoints = transformedEndpoints.filter(e => e.status === 'offline').length
+      const unknownEndpoints = transformedEndpoints.filter(e => e.status === 'unknown').length
       
-      let workspaceStatus: 'online' | 'warning' | 'offline' = 'online'
-      if (offlineEndpoints > 0) workspaceStatus = 'offline'
-      else if (warningEndpoints > 0) workspaceStatus = 'warning'
-      
-      // Transform API data to UI format with all required fields
-      const transformedWorkspace: WorkspaceDetailData = {
-        ...createDefaultWorkspace(workspaceData), // Start with safe defaults
-        ...workspaceData, // Override with actual data
-        // Always ensure computed fields are properly set
-        endpointCount: transformedEndpoints.length,
-        maxEndpoints: 7,
-        status: transformedEndpoints.length === 0 ? 'online' : workspaceStatus,
-        uptime: transformedEndpoints.length === 0 ? 100 : 
-          transformedEndpoints.reduce((sum, e) => sum + e.uptime, 0) / transformedEndpoints.length,
-        avgResponseTime: transformedEndpoints.length === 0 ? 0 :
-          transformedEndpoints.reduce((sum, e) => sum + e.responseTime, 0) / transformedEndpoints.length,
-        lastCheck: transformedEndpoints.length === 0 ? new Date().toISOString() :
-          transformedEndpoints.reduce((latest, e) => 
-            new Date(e.lastCheck) > new Date(latest) ? e.lastCheck : latest, 
-            transformedEndpoints[0].lastCheck
-          ),
-        activeIncidents: offlineEndpoints,
-        endpoints: transformedEndpoints
+      // Determine workspace status
+      let workspaceStatus: 'online' | 'warning' | 'offline' | 'unknown' = 'unknown'
+      if (transformedEndpoints.length === 0) {
+        workspaceStatus = 'unknown' // No endpoints to monitor
+      } else if (offlineEndpoints > 0) {
+        workspaceStatus = 'offline'
+      } else if (warningEndpoints > 0) {
+        workspaceStatus = 'warning'
+      } else if (onlineEndpoints > 0) {
+        workspaceStatus = 'online'
+      } else {
+        workspaceStatus = 'unknown' // All endpoints are unknown status
       }
       
-      console.log('✅ Workspace data loaded:', {
-        name: transformedWorkspace.name,
-        endpointCount: transformedWorkspace.endpointCount,
-        hasEndpoints: transformedWorkspace.endpoints.length > 0
-      })
+      // Calculate uptime only if we have real data
+      const uptimeValues = transformedEndpoints.filter(e => e.uptime !== null).map(e => e.uptime!)
+      const avgUptime = uptimeValues.length > 0 ? 
+        uptimeValues.reduce((sum, uptime) => sum + uptime, 0) / uptimeValues.length : null
+      
+      // Calculate response time only if we have real data
+      const responseTimeValues = transformedEndpoints.filter(e => e.responseTime !== null).map(e => e.responseTime!)
+      const avgResponseTime = responseTimeValues.length > 0 ?
+        responseTimeValues.reduce((sum, time) => sum + time, 0) / responseTimeValues.length : null
+      
+      // Get most recent check time if available
+      const checkTimes = transformedEndpoints.filter(e => e.lastCheck !== null).map(e => e.lastCheck!)
+      const lastCheck = checkTimes.length > 0 ?
+        checkTimes.reduce((latest, current) => 
+          new Date(current) > new Date(latest) ? current : latest
+        ) : null
+      
+      // Transform API data to UI format
+      const transformedWorkspace: WorkspaceDetailData = {
+        ...workspaceData,
+        endpointCount: transformedEndpoints.length,
+        maxEndpoints: 7,
+        status: workspaceStatus,
+        uptime: avgUptime,
+        avgResponseTime: avgResponseTime,
+        lastCheck: lastCheck,
+        activeIncidents: offlineEndpoints, // Only count confirmed offline endpoints
+        endpoints: transformedEndpoints
+      }
       
       setWorkspace(transformedWorkspace)
       
@@ -158,40 +174,35 @@ export default function WorkspaceDetailPage() {
     }
   }, [workspaceId])
 
-  useEffect(() => {
-    loadWorkspaceData()
-  }, [loadWorkspaceData])
-
-  const handleRefresh = () => {
-    loadWorkspaceData()
-  }
-
   const handleAddEndpoint = () => {
     setAddEndpointModalOpen(true)
   }
 
   const handleEndpointAdded = () => {
-    loadWorkspaceData() // Refresh data after adding endpoint
+    setAddEndpointModalOpen(false)
+    loadWorkspaceData() // Refresh data
+    toast.success('Endpoint added successfully!')
   }
 
   const handleEndpointDeleted = () => {
-    loadWorkspaceData() // Refresh data after deleting endpoint
+    loadWorkspaceData() // Refresh data
+    toast.success('Endpoint deleted successfully!')
   }
+
+  useEffect(() => {
+    loadWorkspaceData()
+  }, [loadWorkspaceData])
 
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-black text-white overflow-hidden">
-          <AnimatedBackground particleCount={15} />
-          
-          <div className="relative z-10 px-6 py-12">
-            <div className="max-w-7xl mx-auto">
-              {/* Loading State */}
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="flex items-center space-x-3">
-                  <RefreshCw className="w-6 h-6 animate-spin text-blue-400" />
-                  <span className="text-lg text-gray-300">Loading workspace...</span>
-                </div>
+        <div className="min-h-screen bg-gray-900 relative overflow-hidden">
+          <AnimatedBackground />
+          <div className="relative z-10 container mx-auto px-6 py-8">
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="text-center">
+                <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4" />
+                <p className="text-gray-400">Loading workspace...</p>
               </div>
             </div>
           </div>
@@ -200,40 +211,23 @@ export default function WorkspaceDetailPage() {
     )
   }
 
-  if (error || !workspace) {
+  if (error) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-black text-white overflow-hidden">
-          <AnimatedBackground particleCount={15} />
-          
-          <div className="relative z-10 px-6 py-12">
-            <div className="max-w-7xl mx-auto">
-              {/* Error State */}
-              <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                  <div className="text-red-400 text-6xl mb-4">⚠</div>
-                  <h2 className="text-2xl font-bold mb-2">{error || 'Workspace not found'}</h2>
-                  <p className="text-gray-400 mb-6">
-                    {error?.includes('Authentication') 
-                      ? 'Please log in again to continue.' 
-                      : 'The workspace you\'re looking for might have been deleted or you don\'t have access to it.'
-                    }
-                  </p>
-                  <div className="flex items-center justify-center space-x-4">
-                    <button
-                      onClick={() => router.push('/dashboard')}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all"
-                    >
-                      Back to Dashboard
-                    </button>
-                    <button
-                      onClick={handleRefresh}
-                      className="px-6 py-3 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-all"
-                    >
-                      Try Again
-                    </button>
-                  </div>
-                </div>
+        <div className="min-h-screen bg-gray-900 relative overflow-hidden">
+          <AnimatedBackground />
+          <div className="relative z-10 container mx-auto px-6 py-8">
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="text-center">
+                <div className="text-6xl mb-4">😞</div>
+                <h2 className="text-2xl font-bold text-white mb-2">Oops!</h2>
+                <p className="text-gray-400 mb-6">{error}</p>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                >
+                  Back to Dashboard
+                </button>
               </div>
             </div>
           </div>
@@ -242,46 +236,54 @@ export default function WorkspaceDetailPage() {
     )
   }
 
-  // Success state - render workspace details
+  if (!workspace) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-900 relative overflow-hidden">
+          <AnimatedBackground />
+          <div className="relative z-10 container mx-auto px-6 py-8">
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🤷‍♂️</div>
+                <h2 className="text-2xl font-bold text-white mb-2">Workspace Not Found</h2>
+                <p className="text-gray-400 mb-6">The workspace you're looking for doesn't exist.</p>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                >
+                  Back to Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
   return (
     <ProtectedRoute>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="min-h-screen bg-black text-white overflow-hidden"
-      >
-        <AnimatedBackground particleCount={15} />
+      <div className="min-h-screen bg-gray-900 relative overflow-hidden">
+        <AnimatedBackground />
         
-        <div className="relative z-10 px-6 py-12">
-          <div className="max-w-7xl mx-auto">
+        <div className="relative z-10 container mx-auto px-6 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             {/* Workspace Header */}
-            <WorkspaceHeader 
+            <WorkspaceHeader
               workspace={{
                 ...workspace,
-                createdAt: workspace.created_at,
-                endpoints: workspace.endpoints.map(e => ({
-                  name: e.name,
-                  status: e.status
-                }))
+                createdAt: workspace.created_at
               }}
-              onRefresh={handleRefresh}
+              onRefresh={loadWorkspaceData}
               onAddEndpoint={handleAddEndpoint}
             />
 
             {/* Main Content */}
             <div className="space-y-8">
-              {/* Charts Section - Only show if we have endpoints */}
-              {workspace.endpointCount > 0 && (
-                <WorkspaceChartsSection 
-                  workspaceData={{
-                    ...workspace,
-                    // Transform for charts component
-                    endpointData: workspace.endpoints
-                  }}
-                />
-              )}
-
               {/* Endpoints Table */}
               <EndpointsTable
                 endpoints={workspace.endpoints}
@@ -289,20 +291,25 @@ export default function WorkspaceDetailPage() {
                 onEndpointDeleted={handleEndpointDeleted}
                 onAddEndpoint={handleAddEndpoint}
               />
+
+              {/* Charts Section */}
+              <WorkspaceChartsSection 
+                workspaceData={workspace}
+              />
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Add Endpoint Modal */}
-        <EndpointFormModal
-          isOpen={addEndpointModalOpen}
-          onClose={() => setAddEndpointModalOpen(false)}
-          onSuccess={handleEndpointAdded}
-          workspaceId={workspaceId}
-          maxEndpoints={workspace.maxEndpoints}
-          currentEndpoints={workspace.endpointCount}
-        />
-      </motion.div>
+        {addEndpointModalOpen && (
+          <EndpointFormModal
+            workspaceId={workspaceId}
+            isOpen={addEndpointModalOpen}
+            onClose={() => setAddEndpointModalOpen(false)}
+            onSuccess={handleEndpointAdded}
+          />
+        )}
+      </div>
     </ProtectedRoute>
   )
 }
