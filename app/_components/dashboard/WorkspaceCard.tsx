@@ -1,4 +1,4 @@
-// components/dashboard/WorkspaceCard.tsx
+// components/dashboard/WorkspaceCard.tsx - FIXED VERSION
 import React from "react";
 import { MoreVertical, Clock, AlertCircle } from "lucide-react";
 import {
@@ -22,7 +22,16 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   workspace,
   onClick,
 }) => {
-  const hasEndpoints = workspace.endpointCount > 0;
+  // Add safety checks for undefined properties
+  const endpointCount = workspace.endpointCount ?? 0;
+  const maxEndpoints = workspace.maxEndpoints ?? 7;
+  const endpoints = workspace.endpoints ?? [];
+  const uptime = workspace.uptime ?? 100;
+  const avgResponseTime = workspace.avgResponseTime ?? 0;
+  const activeIncidents = workspace.activeIncidents ?? 0;
+  const status = workspace.status ?? 'online';
+  
+  const hasEndpoints = endpointCount > 0;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -67,11 +76,11 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
             {hasEndpoints && (
               <div
                 className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                  workspace.status
+                  status
                 )}`}
               >
-                <span className="mr-1">{getStatusIcon(workspace.status)}</span>
-                {workspace.status}
+                <span className="mr-1">{getStatusIcon(status)}</span>
+                {status}
               </div>
             )}
           </div>
@@ -85,9 +94,9 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
       <div className="flex items-center space-x-1 mb-4">
         {hasEndpoints ? (
           <>
-            {workspace.endpoints.slice(0, 7).map((endpoint, i) => (
+            {endpoints.slice(0, 7).map((endpoint, i) => (
               <div
-                key={endpoint.id}
+                key={endpoint.id || i}
                 className={`w-2 h-2 rounded-full ${
                   endpoint.status === "online"
                     ? "bg-green-400"
@@ -100,9 +109,9 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
                 title={`${endpoint.name}: ${endpoint.status}`}
               />
             ))}
-            {workspace.endpointCount > 7 && (
+            {endpointCount > 7 && (
               <span className="text-xs text-gray-400 ml-2">
-                +{workspace.endpointCount - 7}
+                +{endpointCount - 7}
               </span>
             )}
           </>
@@ -118,19 +127,19 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         <div>
           <div className="text-sm text-gray-400 mb-1">Endpoints</div>
           <div className="text-white font-medium">
-            {workspace.endpointCount}/{workspace.maxEndpoints}
+            {endpointCount}/{maxEndpoints}
           </div>
         </div>
         <div>
           <div className="text-sm text-gray-400 mb-1">Uptime</div>
           <div className="text-white font-medium">
-            {hasEndpoints ? formatUptime(workspace.uptime) : "—"}
+            {hasEndpoints ? formatUptime(uptime) : "—"}
           </div>
         </div>
         <div>
           <div className="text-sm text-gray-400 mb-1">Response</div>
           <div className="text-white font-medium">
-            {hasEndpoints ? formatResponseTime(workspace.avgResponseTime) : "—"}
+            {hasEndpoints ? formatResponseTime(avgResponseTime) : "—"}
           </div>
         </div>
       </div>
@@ -141,16 +150,16 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
           <Clock className="w-3 h-3" />
           <span>
             {hasEndpoints
-              ? formatLastCheck(workspace.lastCheck)
-              : formatCreatedAt(workspace.createdAt)}
+              ? formatLastCheck(workspace.lastCheck || workspace.created_at)
+              : formatCreatedAt(workspace.createdAt || workspace.created_at)}
           </span>
         </div>
-        {workspace.activeIncidents > 0 && (
+        {activeIncidents > 0 && (
           <div className="flex items-center space-x-1 text-red-400">
             <AlertCircle className="w-3 h-3" />
             <span>
-              {workspace.activeIncidents} incident
-              {workspace.activeIncidents !== 1 ? "s" : ""}
+              {activeIncidents} incident
+              {activeIncidents !== 1 ? "s" : ""}
             </span>
           </div>
         )}

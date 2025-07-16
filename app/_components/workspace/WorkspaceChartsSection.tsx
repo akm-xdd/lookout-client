@@ -1,24 +1,32 @@
 import React from 'react'
 
 interface WorkspaceChartsSectionProps {
-  workspace: {
+  workspaceData: {
     id: string
     name: string
-    endpointCount: number
-    uptime: number
-    avgResponseTime: number
-    activeIncidents: number
-    endpoints: any[]
+    endpointCount?: number
+    uptime?: number
+    avgResponseTime?: number
+    activeIncidents?: number
+    endpoints?: any[]
+    endpointData?: any[]
   }
   className?: string
 }
 
 const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({ 
-  workspace, 
+  workspaceData, 
   className = "" 
 }) => {
+  // Add safety checks for all properties
+  const endpointCount = workspaceData.endpointCount ?? 0
+  const uptime = workspaceData.uptime ?? 100
+  const avgResponseTime = workspaceData.avgResponseTime ?? 0
+  const activeIncidents = workspaceData.activeIncidents ?? 0
+  const endpoints = workspaceData.endpoints ?? workspaceData.endpointData ?? []
+
   // Don't show charts if no endpoints
-  if (workspace.endpointCount === 0) {
+  if (endpointCount === 0) {
     return (
       <div className={`space-y-6 ${className}`}>
         <div>
@@ -94,7 +102,7 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
             <div className="text-center">
               <div className="text-4xl mb-2">📊</div>
               <p className="text-sm">Endpoint comparison will appear here</p>
-              <p className="text-xs text-gray-600 mt-1">{workspace.endpointCount} endpoint{workspace.endpointCount !== 1 ? 's' : ''} configured</p>
+              <p className="text-xs text-gray-600 mt-1">{endpointCount} endpoint{endpointCount !== 1 ? 's' : ''} configured</p>
             </div>
           </div>
         </div>
@@ -112,47 +120,47 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Overall Uptime</span>
               <span className={`font-semibold ${
-                workspace.uptime >= 99 ? 'text-green-400' :
-                workspace.uptime >= 95 ? 'text-yellow-400' : 'text-red-400'
+                uptime >= 99 ? 'text-green-400' :
+                uptime >= 95 ? 'text-yellow-400' : 'text-red-400'
               }`}>
-                {workspace.uptime.toFixed(1)}%
+                {uptime.toFixed(1)}%
               </span>
             </div>
             
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Average Response</span>
               <span className={`font-semibold ${
-                workspace.avgResponseTime < 500 ? 'text-green-400' :
-                workspace.avgResponseTime < 1000 ? 'text-yellow-400' : 'text-red-400'
+                avgResponseTime < 500 ? 'text-green-400' :
+                avgResponseTime < 1000 ? 'text-yellow-400' : 'text-red-400'
               }`}>
-                {workspace.avgResponseTime}ms
+                {avgResponseTime}ms
               </span>
             </div>
             
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Active Incidents</span>
               <span className={`font-semibold ${
-                workspace.activeIncidents === 0 ? 'text-green-400' : 'text-red-400'
+                activeIncidents === 0 ? 'text-green-400' : 'text-red-400'
               }`}>
-                {workspace.activeIncidents}
+                {activeIncidents}
               </span>
             </div>
             
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Endpoints Online</span>
               <span className="font-semibold text-white">
-                {workspace.endpoints.filter(e => e.status === 'online').length}/{workspace.endpointCount}
+                {endpoints.filter((e: any) => e.status === 'online').length}/{endpointCount}
               </span>
             </div>
             
             <div className="flex items-center justify-between pt-2 border-t border-white/10">
               <span className="text-gray-400">Health Score</span>
               <span className={`font-bold text-lg ${
-                workspace.endpoints.filter(e => e.status === 'online').length === workspace.endpointCount ? 'text-green-400' :
-                workspace.endpoints.filter(e => e.status === 'offline').length === 0 ? 'text-yellow-400' : 'text-red-400'
+                endpoints.filter((e: any) => e.status === 'online').length === endpointCount ? 'text-green-400' :
+                endpoints.filter((e: any) => e.status === 'offline').length === 0 ? 'text-yellow-400' : 'text-red-400'
               }`}>
-                {workspace.endpointCount > 0 ? 
-                  Math.round((workspace.endpoints.filter(e => e.status === 'online').length / workspace.endpointCount) * 100) : 100}%
+                {endpointCount > 0 ? 
+                  Math.round((endpoints.filter((e: any) => e.status === 'online').length / endpointCount) * 100) : 100}%
               </span>
             </div>
           </div>

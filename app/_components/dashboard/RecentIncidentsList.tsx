@@ -1,4 +1,4 @@
-// components/dashboard/RecentIncidentsList.tsx
+// components/dashboard/RecentIncidentsList.tsx - FIXED VERSION
 import React from 'react'
 import { AlertCircle, CheckCircle, Clock } from 'lucide-react'
 import { DashboardData, formatLastCheck } from '@/lib/data-loader'
@@ -12,7 +12,9 @@ const RecentIncidentsList: React.FC<RecentIncidentsListProps> = ({
   data, 
   className = "" 
 }) => {
-  const incidents = data.recentIncidents.slice(0, 5) // Show last 5 incidents
+  // Add safety check for undefined recentIncidents
+  const recentIncidents = data.recentIncidents || []
+  const incidents = recentIncidents.slice(0, 5) // Show last 5 incidents
 
   const formatDuration = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s`
@@ -119,10 +121,10 @@ const RecentIncidentsList: React.FC<RecentIncidentsListProps> = ({
       </div>
       
       {/* View All Link */}
-      {data.recentIncidents.length > 5 && (
+      {recentIncidents.length > 5 && (
         <div className="mt-4 pt-4 border-t border-white/10">
           <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-            View all {data.recentIncidents.length} incidents →
+            View all {recentIncidents.length} incidents →
           </button>
         </div>
       )}

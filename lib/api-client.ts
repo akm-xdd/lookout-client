@@ -92,6 +92,62 @@ export const workspaceAPI = {
   }
 }
 
+// Endpoint API methods
+export const endpointAPI = {
+  // Get all endpoints for a workspace
+  async getWorkspaceEndpoints(workspaceId: string) {
+    return apiCall(`/api/workspaces/${workspaceId}/endpoints`)
+  },
+
+  // Create endpoint
+  async createEndpoint(workspaceId: string, data: {
+    name: string
+    url: string
+    method?: string
+    headers?: Record<string, string>
+    body?: string
+    expected_status?: number
+    frequency_minutes?: number
+    timeout_seconds?: number
+    is_active?: boolean
+  }) {
+    return apiCall(`/api/workspaces/${workspaceId}/endpoints`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // Get single endpoint
+  async getEndpoint(workspaceId: string, endpointId: string) {
+    return apiCall(`/api/workspaces/${workspaceId}/endpoints/${endpointId}`)
+  },
+
+  // Update endpoint
+  async updateEndpoint(workspaceId: string, endpointId: string, data: {
+    name?: string
+    url?: string
+    method?: string
+    headers?: Record<string, string>
+    body?: string
+    expected_status?: number
+    frequency_minutes?: number
+    timeout_seconds?: number
+    is_active?: boolean
+  }) {
+    return apiCall(`/api/workspaces/${workspaceId}/endpoints/${endpointId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // Delete endpoint
+  async deleteEndpoint(workspaceId: string, endpointId: string) {
+    return apiCall(`/api/workspaces/${workspaceId}/endpoints/${endpointId}`, {
+      method: 'DELETE'
+    })
+  }
+}
+
 // Health check
 export const healthAPI = {
   async check() {

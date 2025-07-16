@@ -1,4 +1,4 @@
-// components/workspace/WorkspaceHeader.tsx
+// components/workspace/WorkspaceHeader.tsx - FIXED VERSION
 import React from 'react'
 import { ArrowLeft, Settings, Plus, Play, MoreVertical, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -21,11 +21,24 @@ interface WorkspaceHeaderProps {
     endpoints: Array<{ name: string; status: 'online' | 'warning' | 'offline' | string }>
   }
   onRefresh?: () => void
+  onAddEndpoint?: () => void
 }
 
-const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh }) => {
+const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ 
+  workspace, 
+  onRefresh, 
+  onAddEndpoint 
+}) => {
   const router = useRouter()
-  const hasEndpoints = workspace.endpointCount > 0
+  
+  // Add safety checks for undefined properties
+  const endpointCount = workspace.endpointCount ?? 0
+  const maxEndpoints = workspace.maxEndpoints ?? 7
+  const endpoints = workspace.endpoints ?? []
+  const uptime = workspace.uptime ?? 100
+  const avgResponseTime = workspace.avgResponseTime ?? 0
+  
+  const hasEndpoints = endpointCount > 0
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -50,10 +63,14 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
   }
 
   const handleAddEndpoint = () => {
-    toast.info('Coming soon!', {
-      description: 'Add endpoint functionality is being built',
-      duration: 3000,
-    })
+    if (onAddEndpoint) {
+      onAddEndpoint()
+    } else {
+      toast.info('Coming soon!', {
+        description: 'Add endpoint functionality is being built',
+        duration: 3000,
+      })
+    }
   }
 
   const handleTestAll = () => {
@@ -117,7 +134,7 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
             <div>
               <span className="text-gray-400">Endpoints: </span>
               <span className="text-white font-medium">
-                {workspace.endpointCount}/{workspace.maxEndpoints}
+                {endpointCount}/{maxEndpoints}
               </span>
             </div>
 
@@ -125,35 +142,30 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
               <>
                 <div>
                   <span className="text-gray-400">Uptime: </span>
-                  <span className="text-white font-medium">
-                    {workspace.uptime.toFixed(1)}%
+                  <span className={`font-medium ${uptime >= 99 ? 'text-green-400' : uptime >= 95 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    {uptime.toFixed(1)}%
                   </span>
                 </div>
+
                 <div>
                   <span className="text-gray-400">Avg Response: </span>
-                  <span className="text-white font-medium">
-                    {workspace.avgResponseTime}ms
+                  <span className={`font-medium ${avgResponseTime < 500 ? 'text-green-400' : avgResponseTime < 1000 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    {avgResponseTime}ms
                   </span>
                 </div>
+
                 <div>
                   <span className="text-gray-400">Last Check: </span>
                   <span className="text-white font-medium">
                     {formatLastCheck(workspace.lastCheck)}
                   </span>
                 </div>
-                {workspace.activeIncidents > 0 && (
-                  <div>
-                    <span className="text-gray-400">Active Incidents: </span>
-                    <span className="text-red-400 font-medium">
-                      {workspace.activeIncidents}
-                    </span>
-                  </div>
-                )}
               </>
             ) : (
               <div>
-                <span className="text-gray-400">
-                 No endpoints configured yet
+                <span className="text-gray-400">Created: </span>
+                <span className="text-white font-medium">
+                  {formatCreatedAt(workspace.createdAt)}
                 </span>
               </div>
             )}
@@ -210,9 +222,9 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
         <div className="flex items-center space-x-4">
           <span className="text-gray-400 text-sm">Endpoints:</span>
           <div className="flex items-center space-x-1">
-            {workspace.endpoints.slice(0, 7).map((endpoint, i) => (
+            {endpoints?.slice(0, 7).map((endpoint, i) => (
               <div
-                key={i}
+                key={endpoint.id || i}
                 className={`w-3 h-3 rounded-full ${
                   endpoint.status === 'online' ? 'bg-green-400' :
                   endpoint.status === 'warning' ? 'bg-yellow-400' :
@@ -221,7 +233,7 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
                 title={`${endpoint.name}: ${endpoint.status}`}
               />
             ))}
-            {workspace.endpointCount < workspace.maxEndpoints && (
+            {endpointCount < maxEndpoints && (
               <button
                 onClick={handleAddEndpoint}
                 className="w-3 h-3 border-2 border-dashed border-gray-500 rounded-full hover:border-blue-400 transition-colors"
@@ -230,9 +242,9 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ workspace, onRefresh 
             )}
           </div>
           <span className="text-gray-500 text-xs">
-            {workspace.endpoints.filter(e => e.status === 'online').length} online,{' '}
-            {workspace.endpoints.filter(e => e.status === 'warning').length} warning,{' '}
-            {workspace.endpoints.filter(e => e.status === 'offline').length} offline
+            {endpoints.filter(e => e.status === 'online').length} online,{' '}
+            {endpoints.filter(e => e.status === 'warning').length} warning,{' '}
+            {endpoints.filter(e => e.status === 'offline').length} offline
           </span>
         </div>
       ) : (
