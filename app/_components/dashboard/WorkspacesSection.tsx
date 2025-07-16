@@ -7,6 +7,8 @@ import CreateWorkspaceModal from '../workspace/CreateWorkspaceModal'
 import EditWorkspaceModal from '../workspace/EditWorkspaceModal'
 import DeleteWorkspaceModal from '../workspace/DeleteWorkspaceModal'
 import { DashboardData } from '@/lib/data-loader'
+import { cacheInvalidation } from '@/lib/data-loader'
+
 
 interface WorkspacesSectionProps {
   data: DashboardData
@@ -43,13 +45,15 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
     setIsCreateModalOpen(true)
   }
 
-  const handleCreateSuccess = () => {
-    setIsCreateModalOpen(false)
-    // Trigger data refresh when workspace is created
-    if (onRefresh) {
-      onRefresh()
-    }
+const handleCreateSuccess = () => {
+  setIsCreateModalOpen(false)
+  // Invalidate cache before triggering refresh
+  cacheInvalidation.onWorkspaceChange()
+  // Trigger data refresh when workspace is created
+  if (onRefresh) {
+    onRefresh()
   }
+}
 
   const handleEditWorkspace = (workspace: any) => {
     setWorkspaceToEdit({
@@ -60,14 +64,19 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
     setIsEditModalOpen(true)
   }
 
-  const handleEditSuccess = () => {
-    setIsEditModalOpen(false)
-    setWorkspaceToEdit(null)
-    // Trigger data refresh when workspace is edited
-    if (onRefresh) {
-      onRefresh()
-    }
+const handleEditSuccess = () => {
+  setIsEditModalOpen(false)
+  setWorkspaceToEdit(null)
+  // Invalidate cache for the specific workspace
+  if (workspaceToEdit?.id) {
+    cacheInvalidation.onWorkspaceChange(workspaceToEdit.id)
   }
+  // Trigger data refresh when workspace is edited
+  if (onRefresh) {
+    onRefresh()
+  }
+}
+
 
   const handleEditClose = () => {
     setIsEditModalOpen(false)
@@ -84,14 +93,18 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
     setIsDeleteModalOpen(true)
   }
 
-  const handleDeleteSuccess = () => {
-    setIsDeleteModalOpen(false)
-    setWorkspaceToDelete(null)
-    // Trigger data refresh when workspace is deleted
-    if (onRefresh) {
-      onRefresh()
-    }
+const handleDeleteSuccess = () => {
+  setIsDeleteModalOpen(false)
+  // Invalidate cache for the deleted workspace
+  if (workspaceToDelete?.id) {
+    cacheInvalidation.onWorkspaceChange(workspaceToDelete.id)
   }
+  setWorkspaceToDelete(null)
+  // Trigger data refresh when workspace is deleted
+  if (onRefresh) {
+    onRefresh()
+  }
+}
 
   const handleDeleteClose = () => {
     setIsDeleteModalOpen(false)

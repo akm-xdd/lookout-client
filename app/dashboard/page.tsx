@@ -10,7 +10,8 @@ import OverviewStatsSection from "../_components/dashboard/OverviewStatsSection"
 import ChartsSection from "../_components/dashboard/ChartsSection";
 import WorkspacesSection from "../_components/dashboard/WorkspacesSection";
 import { loadDashboardData, DashboardData } from "@/lib/data-loader";
-
+import { loadDashboardDataCached, refreshDashboardData } from "@/lib/cached-data-loader";
+import { cacheInvalidation } from "@/lib/data-loader";
 export default function DashboardPage() {
   const { user, signOut } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
@@ -33,43 +34,43 @@ export default function DashboardPage() {
   const hasLoadedData = useRef(false);
 
   // Load data function - keep user dependency but use user.id to prevent recreations
-  const loadData = useCallback(async () => {
-    if (!user) return;
+const loadData = useCallback(async () => {
+  if (!user) return;
 
-    try {
-      setLoading(true);
-      setError(null);
-      console.log("🔄 Loading dashboard data...");
+  try {
+    setLoading(true);
+    setError(null);
+    console.log("🔄 Loading dashboard data...");
 
-      const dashData = await loadDashboardData();
+    // Use cached version instead of direct API call
+    const dashData = await loadDashboardDataCached();
 
-      console.log("Dashboard data:", dashboardData);
-      console.log("Workspaces:", dashboardData?.workspaces);
-      console.log("Overview:", dashboardData?.overview);
+    console.log("Dashboard data:", dashData);
+    console.log("Workspaces:", dashData?.workspaces);
+    console.log("Overview:", dashData?.overview);
 
-      // Merge user email from auth
-      if (dashData && user?.email) {
-        dashData.user.email = user.email;
-        dashData.user.id = user.id;
-      }
-
-      setDashboardData(dashData);
-      hasLoadedData.current = true;
-    } catch (loadError) {
-      console.error("Failed to load dashboard data:", loadError);
-      const errorMessage =
-        loadError instanceof Error ? loadError.message : "Unknown error";
-      setError(errorMessage);
-
-      toast.error("Failed to load dashboard", {
-        description: errorMessage,
-        duration: 5000,
-      });
-    } finally {
-      setLoading(false);
+    // Merge user email from auth
+    if (dashData && user?.email) {
+      dashData.user.email = user.email;
+      dashData.user.id = user.id;
     }
-  }, [user?.id, user?.email]); // Only depend on stable user properties
 
+    setDashboardData(dashData);
+    hasLoadedData.current = true;
+  } catch (loadError) {
+    console.error("Failed to load dashboard data:", loadError);
+    const errorMessage =
+      loadError instanceof Error ? loadError.message : "Unknown error";
+    setError(errorMessage);
+
+    toast.error("Failed to load dashboard", {
+      description: errorMessage,
+      duration: 5000,
+    });
+  } finally {
+    setLoading(false);
+  }
+}, [user?.id, user?.email]);
   // Load data only once when user becomes available
   useEffect(() => {
     if (user && !hasLoadedData.current) {
@@ -78,10 +79,39 @@ export default function DashboardPage() {
   }, [user, loadData]);
 
   // Handle data refresh (for when workspaces are created/updated)
-  const handleDataRefresh = useCallback(() => {
-    console.log("🔄 Manual refresh triggered");
-    loadData();
-  }, [loadData]);
+const handleDataRefresh = useCallback(async () => {
+  if (!user) return;
+  
+  console.log("🔄 Manual refresh triggered");
+  
+  try {
+    setLoading(true);
+    // Force refresh by clearing cache first
+    const dashData = await refreshDashboardData();
+    
+    // Merge user email from auth
+    if (dashData && user?.email) {
+      dashData.user.email = user.email;
+      dashData.user.id = user.id;
+    }
+
+    setDashboardData(dashData);
+    toast.success("Dashboard refreshed");
+  } catch (error) {
+    console.error("Refresh failed:", error);
+    toast.error("Failed to refresh dashboard");
+  } finally {
+    setLoading(false);
+  }
+}, [user?.id, user?.email]);
+
+// ADD THIS FUNCTION TO HANDLE WORKSPACE CHANGES:
+const handleWorkspaceChange = useCallback(() => {
+  // Invalidate cache when workspaces are modified
+  cacheInvalidation.onWorkspaceChange();
+  // Reload data
+  loadData();
+}, [loadData]);
 
   const handleSignOut = async () => {
     await signOut();

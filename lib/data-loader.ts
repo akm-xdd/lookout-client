@@ -1,5 +1,6 @@
 // lib/data-loader.ts - FIXED VERSION
 import { workspaceAPI, endpointAPI, APIError, dashboardAPI } from './api-client'
+import { invalidateCache, invalidateCachePattern, cacheKeys } from './cache-manager'
 
 // Core interfaces
 export interface WorkspaceData {
@@ -318,3 +319,32 @@ export function getDashboardStats(data: DashboardData) {
     activeIncidents: data.overview.activeIncidents
   }
 }
+
+/**
+ * Cache invalidation helpers for different mutation scenarios
+ */
+export const cacheInvalidation = {
+  // When workspace is created/edited/deleted
+  onWorkspaceChange: (workspaceId?: string) => {
+    invalidateCache(cacheKeys.dashboard())
+    if (workspaceId) {
+      invalidateCachePattern(cacheKeys.workspacePattern(workspaceId))
+    }
+  },
+
+  // When endpoint is created/edited/deleted
+  onEndpointChange: (workspaceId: string) => {
+    invalidateCache(cacheKeys.dashboard())
+    invalidateCache(cacheKeys.workspaceEndpoints(workspaceId))
+    // Keep workspace data cached since it doesn't change
+  },
+
+  // Manual refresh (for refresh buttons)
+  onManualRefresh: (scope: 'dashboard' | 'workspace', workspaceId?: string) => {
+    if (scope === 'dashboard') {
+      invalidateCache(cacheKeys.dashboard())
+    } else if (scope === 'workspace' && workspaceId) {
+      invalidateCachePattern(cacheKeys.workspacePattern(workspaceId))
+    }
+  }
+} as const

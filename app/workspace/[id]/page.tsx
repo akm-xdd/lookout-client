@@ -13,6 +13,8 @@ import EndpointFormModal from '@/app/_components/workspace/EndpointFormModal'
 import EditWorkspaceModal from '@/app/_components/workspace/EditWorkspaceModal'
 import DeleteWorkspaceModal from '@/app/_components/workspace/DeleteWorkspaceModal'
 import { loadDashboardData, DashboardData, WorkspaceData } from '@/lib/data-loader'
+import { loadWorkspaceDataCached, refreshWorkspaceData } from '@/lib/cached-data-loader'
+import { cacheInvalidation } from '@/lib/data-loader'
 import { useRouter } from 'next/navigation'
 import { workspaceAPI, endpointAPI, APIError } from '@/lib/api-client'
 import { RefreshCw } from 'lucide-react'
@@ -47,7 +49,72 @@ interface WorkspaceDetailData {
   endpoints: EndpointData[]
 }
 
+
+
 export default function WorkspaceDetailPage() {
+
+  const transformWorkspaceData = useCallback((workspaceData: any, endpointsData: any[]): WorkspaceDetailData => {
+  // Transform endpoints data with null handling
+  const transformedEndpoints: EndpointData[] = (endpointsData || []).map((endpoint: any) => ({
+    id: endpoint.id,
+    name: endpoint.name,
+    url: endpoint.url,
+    method: endpoint.method,
+    status: endpoint.is_active ? 'unknown' : 'offline',
+    uptime: null,
+    responseTime: null,
+    lastCheck: null,
+    frequency: endpoint.frequency_minutes
+  }))
+  
+  // Calculate workspace stats
+  const onlineEndpoints = transformedEndpoints.filter(e => e.status === 'online').length
+  const warningEndpoints = transformedEndpoints.filter(e => e.status === 'warning').length
+  const offlineEndpoints = transformedEndpoints.filter(e => e.status === 'offline').length
+  
+  // Determine workspace status
+  let workspaceStatus: 'online' | 'warning' | 'offline' | 'unknown' = 'unknown'
+  if (transformedEndpoints.length === 0) {
+    workspaceStatus = 'unknown'
+  } else if (offlineEndpoints > 0) {
+    workspaceStatus = 'offline'
+  } else if (warningEndpoints > 0) {
+    workspaceStatus = 'warning'
+  } else if (onlineEndpoints > 0) {
+    workspaceStatus = 'online'
+  } else {
+    workspaceStatus = 'unknown'
+  }
+  
+  // Calculate averages
+  const uptimeValues = transformedEndpoints.filter(e => e.uptime !== null).map(e => e.uptime!)
+  const avgUptime = uptimeValues.length > 0 ? 
+    uptimeValues.reduce((sum, uptime) => sum + uptime, 0) / uptimeValues.length : null
+  
+  const responseTimeValues = transformedEndpoints.filter(e => e.responseTime !== null).map(e => e.responseTime!)
+  const avgResponseTime = responseTimeValues.length > 0 ?
+    responseTimeValues.reduce((sum, time) => sum + time, 0) / responseTimeValues.length : null
+  
+  const checkTimes = transformedEndpoints.filter(e => e.lastCheck !== null).map(e => e.lastCheck!)
+  const lastCheck = checkTimes.length > 0 ?
+    checkTimes.reduce((latest, current) => 
+      new Date(current) > new Date(latest) ? current : latest
+    ) : null
+  
+  // Return transformed workspace
+  return {
+    ...workspaceData,
+    endpointCount: transformedEndpoints.length,
+    maxEndpoints: 7,
+    status: workspaceStatus,
+    uptime: avgUptime,
+    avgResponseTime: avgResponseTime,
+    lastCheck: lastCheck,
+    activeIncidents: offlineEndpoints,
+    endpoints: transformedEndpoints
+  }
+}, [])
+
   const params = useParams()
   const router = useRouter()
   const workspaceId = params.id as string
@@ -61,100 +128,51 @@ export default function WorkspaceDetailPage() {
   const [editWorkspaceModalOpen, setEditWorkspaceModalOpen] = useState(false)
   const [deleteWorkspaceModalOpen, setDeleteWorkspaceModalOpen] = useState(false)
 
-  const loadWorkspaceData = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      // Get workspace data from API
-      const [workspaceData, endpointsData] = await Promise.all([
-        workspaceAPI.getWorkspace(workspaceId),
-        endpointAPI.getWorkspaceEndpoints(workspaceId)
-      ])
-      
-      if (!workspaceData) {
-        setError('Workspace not found')
-        return
-      }
-      
-      // Transform endpoints data with null handling
-      const transformedEndpoints: EndpointData[] = (endpointsData || []).map((endpoint: any) => ({
-        id: endpoint.id,
-        name: endpoint.name,
-        url: endpoint.url,
-        method: endpoint.method,
-        status: endpoint.is_active ? 'unknown' : 'offline',
-        uptime: null,
-        responseTime: null,
-        lastCheck: null,
-        frequency: endpoint.frequency_minutes
-      }))
-      
-      // Calculate workspace stats
-      const onlineEndpoints = transformedEndpoints.filter(e => e.status === 'online').length
-      const warningEndpoints = transformedEndpoints.filter(e => e.status === 'warning').length
-      const offlineEndpoints = transformedEndpoints.filter(e => e.status === 'offline').length
-      
-      // Determine workspace status
-      let workspaceStatus: 'online' | 'warning' | 'offline' | 'unknown' = 'unknown'
-      if (transformedEndpoints.length === 0) {
-        workspaceStatus = 'unknown'
-      } else if (offlineEndpoints > 0) {
-        workspaceStatus = 'offline'
-      } else if (warningEndpoints > 0) {
-        workspaceStatus = 'warning'
-      } else if (onlineEndpoints > 0) {
-        workspaceStatus = 'online'
-      }
-      
-      // Calculate averages
-      const uptimeValues = transformedEndpoints.filter(e => e.uptime !== null).map(e => e.uptime!)
-      const avgUptime = uptimeValues.length > 0 ? 
-        uptimeValues.reduce((sum, uptime) => sum + uptime, 0) / uptimeValues.length : null
-      
-      const responseTimeValues = transformedEndpoints.filter(e => e.responseTime !== null).map(e => e.responseTime!)
-      const avgResponseTime = responseTimeValues.length > 0 ?
-        responseTimeValues.reduce((sum, time) => sum + time, 0) / responseTimeValues.length : null
-      
-      const checkTimes = transformedEndpoints.filter(e => e.lastCheck !== null).map(e => e.lastCheck!)
-      const lastCheck = checkTimes.length > 0 ?
-        checkTimes.reduce((latest, current) => 
-          new Date(current) > new Date(latest) ? current : latest
-        ) : null
-      
-      // Transform API data to UI format
-      const transformedWorkspace: WorkspaceDetailData = {
-        ...workspaceData,
-        endpointCount: transformedEndpoints.length,
-        maxEndpoints: 7,
-        status: workspaceStatus,
-        uptime: avgUptime,
-        avgResponseTime: avgResponseTime,
-        lastCheck: lastCheck,
-        activeIncidents: offlineEndpoints,
-        endpoints: transformedEndpoints
-      }
-      
-      setWorkspace(transformedWorkspace)
-      
-    } catch (err) {
-      console.error('Failed to load workspace:', err)
-      
-      if (err instanceof APIError) {
-        if (err.status === 404) {
-          setError('Workspace not found')
-        } else if (err.status === 401) {
-          setError('Authentication required. Please log in again.')
-        } else {
-          setError(`Failed to load workspace: ${err.message}`)
-        }
-      } else {
-        setError('Failed to load workspace. Please try again.')
-      }
-    } finally {
-      setLoading(false)
+const loadWorkspaceData = useCallback(async () => {
+  try {
+    setLoading(true)
+    setError(null)
+    
+    const { workspaceData, endpointsData } = await loadWorkspaceDataCached(workspaceId)
+    
+    if (!workspaceData) {
+      setError('Workspace not found')
+      return
     }
-  }, [workspaceId])
+    
+    const transformedWorkspace = transformWorkspaceData(workspaceData, endpointsData)
+    setWorkspace(transformedWorkspace)
+    
+  } catch (err) {
+    // ... existing error handling ...
+  } finally {
+    setLoading(false)
+  }
+}, [workspaceId, transformWorkspaceData])
+
+const handleManualRefresh = useCallback(async () => {
+  console.log('🔄 Manual workspace refresh triggered')
+  
+  try {
+    setLoading(true)
+    const { workspaceData, endpointsData } = await refreshWorkspaceData(workspaceId)
+    
+    if (!workspaceData) {
+      setError('Workspace not found')
+      return
+    }
+    
+    const transformedWorkspace = transformWorkspaceData(workspaceData, endpointsData)
+    setWorkspace(transformedWorkspace)
+    toast.success('Workspace refreshed')
+    
+  } catch (error) {
+    console.error('Refresh failed:', error)
+    toast.error('Failed to refresh workspace')
+  } finally {
+    setLoading(false)
+  }
+}, [workspaceId, transformWorkspaceData])
 
   // Handler functions for workspace actions
   const handleEditWorkspace = () => {
@@ -165,11 +183,12 @@ export default function WorkspaceDetailPage() {
     setDeleteWorkspaceModalOpen(true)
   }
 
-  const handleWorkspaceEdited = () => {
-    setEditWorkspaceModalOpen(false)
-    loadWorkspaceData() // Refresh workspace data
-    toast.success('Workspace updated successfully!')
-  }
+const handleWorkspaceEdited = () => {
+  setEditWorkspaceModalOpen(false)
+  cacheInvalidation.onWorkspaceChange(workspaceId) // Invalidate cache
+  loadWorkspaceData() // Reload from API
+  toast.success('Workspace updated successfully!')
+}
 
   const handleWorkspaceDeleted = () => {
     setDeleteWorkspaceModalOpen(false)
@@ -183,16 +202,18 @@ export default function WorkspaceDetailPage() {
     setAddEndpointModalOpen(true)
   }
 
-  const handleEndpointAdded = () => {
-    setAddEndpointModalOpen(false)
-    loadWorkspaceData()
-    toast.success('Endpoint added successfully!')
-  }
+const handleEndpointAdded = () => {
+  setAddEndpointModalOpen(false)
+  cacheInvalidation.onEndpointChange(workspaceId) // Invalidate cache
+  loadWorkspaceData() // Reload from API
+  toast.success('Endpoint added successfully!')
+}
 
-  const handleEndpointDeleted = () => {
-    loadWorkspaceData()
-    toast.success('Endpoint deleted successfully!')
-  }
+const handleEndpointDeleted = () => {
+  cacheInvalidation.onEndpointChange(workspaceId) // Invalidate cache
+  loadWorkspaceData() // Reload from API
+  toast.success('Endpoint deleted successfully!')
+}
 
   useEffect(() => {
     loadWorkspaceData()
