@@ -3,7 +3,6 @@ import React, { useState } from 'react'
 import { 
   ExternalLink, 
   Play, 
-  Edit, 
   Trash2, 
   MoreVertical,
   Clock,
@@ -96,12 +95,6 @@ const EndpointsTable: React.FC<EndpointsTableProps> = ({
     })
   }
 
-  const handleEditEndpoint = (endpoint: EndpointData) => {
-    toast.info(`Edit ${endpoint.name}`, {
-      description: 'This feature is being built',
-      duration: 3000,
-    })
-  }
 
   const handleDeleteEndpoint = (endpoint: EndpointData) => {
     setEndpointToDelete({
@@ -258,13 +251,7 @@ const EndpointsTable: React.FC<EndpointsTableProps> = ({
                     >
                       <Play className="w-4 h-4 text-gray-400" />
                     </button>
-                    <button
-                      onClick={() => handleEditEndpoint(endpoint)}
-                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                      title="Edit endpoint"
-                    >
-                      <Edit className="w-4 h-4 text-gray-400" />
-                    </button>
+                   
                     <button
                       onClick={() => handleDeleteEndpoint(endpoint)}
                       className="p-2 hover:bg-white/10 rounded-lg transition-colors"
