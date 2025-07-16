@@ -17,12 +17,14 @@ interface WorkspaceDataWithCreated extends WorkspaceData {
 interface WorkspaceCardProps {
   workspace: WorkspaceDataWithCreated;
   onClick?: () => void;
+  onEdit?: () => void; // Add callback for edit action
   onDelete?: () => void; // Add callback for delete action
 }
 
 const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   workspace,
   onClick,
+  onEdit,
   onDelete,
 }) => {
   // Add safety checks for undefined properties
@@ -99,10 +101,16 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDropdownOpen(false);
-    toast.info('Coming soon!', {
-      description: 'Edit workspace functionality is being built',
-      duration: 3000,
-    });
+    
+    // Call the onEdit callback if provided
+    if (onEdit) {
+      onEdit();
+    } else {
+      toast.info('Coming soon!', {
+        description: 'Edit workspace functionality is being built',
+        duration: 3000,
+      });
+    }
   };
 
   const handleDelete = (e: React.MouseEvent) => {

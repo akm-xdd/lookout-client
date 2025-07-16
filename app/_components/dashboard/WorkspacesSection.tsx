@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import WorkspaceCard from './WorkspaceCard'
 import CreateWorkspaceModal from '../workspace/CreateWorkspaceModal'
+import EditWorkspaceModal from '../workspace/EditWorkspaceModal'
 import DeleteWorkspaceModal from '../workspace/DeleteWorkspaceModal'
 import { DashboardData } from '@/lib/data-loader'
 
@@ -20,7 +21,13 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
 }) => {
   const router = useRouter()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [workspaceToEdit, setWorkspaceToEdit] = useState<{
+    id: string
+    name: string
+    description?: string
+  } | null>(null)
   const [workspaceToDelete, setWorkspaceToDelete] = useState<{
     id: string
     name: string
@@ -42,6 +49,29 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
     if (onRefresh) {
       onRefresh()
     }
+  }
+
+  const handleEditWorkspace = (workspace: any) => {
+    setWorkspaceToEdit({
+      id: workspace.id,
+      name: workspace.name,
+      description: workspace.description
+    })
+    setIsEditModalOpen(true)
+  }
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false)
+    setWorkspaceToEdit(null)
+    // Trigger data refresh when workspace is edited
+    if (onRefresh) {
+      onRefresh()
+    }
+  }
+
+  const handleEditClose = () => {
+    setIsEditModalOpen(false)
+    setWorkspaceToEdit(null)
   }
 
   const handleDeleteWorkspace = (workspace: any) => {
@@ -149,6 +179,7 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
                 createdAt: workspace.created_at
               }}
               onClick={() => handleWorkspaceClick(workspace.id)}
+              onEdit={() => handleEditWorkspace(workspace)}
               onDelete={() => handleDeleteWorkspace(workspace)}
             />
           ))}
@@ -159,6 +190,14 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onSuccess={handleCreateSuccess}
+        />
+
+        {/* Edit Workspace Modal */}
+        <EditWorkspaceModal
+          isOpen={isEditModalOpen}
+          onClose={handleEditClose}
+          onSuccess={handleEditSuccess}
+          workspace={workspaceToEdit}
         />
 
         {/* Delete Workspace Modal */}
