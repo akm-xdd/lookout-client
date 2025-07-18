@@ -46,3 +46,58 @@ export const useDeleteEndpoint = (workspaceId: string) => {
     },
   })
 }
+
+// Update endpoint (general purpose)
+export const useUpdateEndpoint = (workspaceId: string) => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ endpointId, data }: {
+      endpointId: string
+      data: {
+        name?: string
+        url?: string
+        method?: string
+        headers?: Record<string, string>
+        body?: string
+        expected_status?: number
+        frequency_minutes?: number
+        timeout_seconds?: number
+        is_active?: boolean
+      }
+    }) => endpointAPI.updateEndpoint(workspaceId, endpointId, data),
+    onSuccess: () => {
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.workspaceEndpoints(workspaceId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
+    }
+  })
+}
+
+// Toggle endpoint active status (specific use case)
+export const useToggleEndpoint = (workspaceId: string) => {
+  const updateEndpoint = useUpdateEndpoint(workspaceId)
+  
+  return {
+    ...updateEndpoint,
+    mutateAsync: async ({ endpointId, isActive }: { endpointId: string; isActive: boolean }) => {
+      return updateEndpoint.mutateAsync({
+        endpointId,
+        data: { is_active: isActive }
+      })
+    },
+    mutate: ({ endpointId, isActive }: { endpointId: string; isActive: boolean }) => {
+      updateEndpoint.mutate({
+        endpointId,
+        data: { is_active: isActive }
+      })
+    }
+  }
+}
+
+export function useTestEndpoint(workspaceId: string) {
+  return useMutation({
+    mutationFn: (endpointId: string) => endpointAPI.testEndpoint(workspaceId, endpointId),
+    // No cache invalidation needed since we don't persist test results
+  })
+}

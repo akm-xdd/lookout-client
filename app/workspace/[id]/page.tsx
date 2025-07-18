@@ -1,25 +1,25 @@
-'use client'
-import React, { useState } from 'react'
-import { motion } from 'motion/react'
-import { useParams } from 'next/navigation'
-import { toast } from 'sonner'
-import ProtectedRoute from '@/app/auth/ProtectedRoute'
-import AnimatedBackground from '@/app/_components/layout/AnimatedBackground'
-import WorkspaceHeader from '@/app/_components/workspace/WorkspaceHeader'
-import EndpointsTable from '@/app/_components/workspace/EndpointsTable'
-import WorkspaceChartsSection from '@/app/_components/workspace/WorkspaceChartsSection'
-import EndpointFormModal from '@/app/_components/workspace/EndpointFormModal'
-import EditWorkspaceModal from '@/app/_components/workspace/EditWorkspaceModal'
-import DeleteWorkspaceModal from '@/app/_components/workspace/DeleteWorkspaceModal'
-import { useRouter } from 'next/navigation'
-import { RefreshCw } from 'lucide-react'
+"use client";
+import React, { useState } from "react";
+import { motion } from "motion/react";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
+import ProtectedRoute from "@/app/auth/ProtectedRoute";
+import AnimatedBackground from "@/app/_components/layout/AnimatedBackground";
+import WorkspaceHeader from "@/app/_components/workspace/WorkspaceHeader";
+import EndpointsTable from "@/app/_components/workspace/EndpointsTable";
+import WorkspaceChartsSection from "@/app/_components/workspace/WorkspaceChartsSection";
+import EndpointFormModal from "@/app/_components/workspace/EndpointFormModal";
+import EditWorkspaceModal from "@/app/_components/workspace/EditWorkspaceModal";
+import DeleteWorkspaceModal from "@/app/_components/workspace/DeleteWorkspaceModal";
+import { useRouter } from "next/navigation";
+import { RefreshCw } from "lucide-react";
 
 // NEW: Import hooks instead of manual data loading
-import { useWorkspace, useWorkspaceEndpoints } from '@/hooks/useWorkspace'
-import { useUpdateWorkspace, useDeleteWorkspace } from '@/hooks/useWorkspaces'
+import { useWorkspace, useWorkspaceEndpoints } from "@/hooks/useWorkspace";
+import { useUpdateWorkspace, useDeleteWorkspace } from "@/hooks/useWorkspaces";
 
 // Import your existing transform function
-import { EndpointData } from '@/lib/data-loader'
+import { EndpointData } from "@/lib/data-loader";
 
 // Transform function (keeping your existing logic)
 function transformEndpointData(endpoint: any): EndpointData {
@@ -28,51 +28,77 @@ function transformEndpointData(endpoint: any): EndpointData {
     name: endpoint.name,
     url: endpoint.url,
     method: endpoint.method,
-    status: endpoint.is_active ? 'unknown' : 'offline',
+    status: endpoint.is_active ? "unknown" : "offline",
     uptime: null,
     responseTime: null,
     lastCheck: null,
-    frequency: endpoint.frequency_minutes
-  }
+    frequency: endpoint.frequency_minutes,
+  };
 }
 
 function transformWorkspaceData(workspaceData: any, endpointsData: any[]) {
-  const transformedEndpoints: EndpointData[] = (endpointsData || []).map(transformEndpointData)
-  
+  // Keep the raw endpoints data instead of transforming it
+  const rawEndpoints = endpointsData || [];
+
+  // Calculate workspace stats from raw data (for existing logic)
+  const transformedEndpoints: EndpointData[] = rawEndpoints.map(
+    transformEndpointData
+  );
+
   // Calculate workspace stats
-  const onlineEndpoints = transformedEndpoints.filter(e => e.status === 'online').length
-  const warningEndpoints = transformedEndpoints.filter(e => e.status === 'warning').length
-  const offlineEndpoints = transformedEndpoints.filter(e => e.status === 'offline').length
-  
+  const onlineEndpoints = transformedEndpoints.filter(
+    (e) => e.status === "online"
+  ).length;
+  const warningEndpoints = transformedEndpoints.filter(
+    (e) => e.status === "warning"
+  ).length;
+  const offlineEndpoints = transformedEndpoints.filter(
+    (e) => e.status === "offline"
+  ).length;
+
   // Determine workspace status
-  let workspaceStatus: 'online' | 'warning' | 'offline' | 'unknown' = 'unknown'
+  let workspaceStatus: "online" | "warning" | "offline" | "unknown" = "unknown";
   if (transformedEndpoints.length === 0) {
-    workspaceStatus = 'unknown'
+    workspaceStatus = "unknown";
   } else if (offlineEndpoints > 0) {
-    workspaceStatus = 'offline'
+    workspaceStatus = "offline";
   } else if (warningEndpoints > 0) {
-    workspaceStatus = 'warning'
+    workspaceStatus = "warning";
   } else if (onlineEndpoints > 0) {
-    workspaceStatus = 'online'
+    workspaceStatus = "online";
   } else {
-    workspaceStatus = 'unknown'
+    workspaceStatus = "unknown";
   }
-  
+
   // Calculate averages
-  const uptimeValues = transformedEndpoints.filter(e => e.uptime !== null).map(e => e.uptime!)
-  const avgUptime = uptimeValues.length > 0 ? 
-    uptimeValues.reduce((sum, uptime) => sum + uptime, 0) / uptimeValues.length : null
-  
-  const responseTimeValues = transformedEndpoints.filter(e => e.responseTime !== null).map(e => e.responseTime!)
-  const avgResponseTime = responseTimeValues.length > 0 ?
-    responseTimeValues.reduce((sum, time) => sum + time, 0) / responseTimeValues.length : null
-  
-  const checkTimes = transformedEndpoints.filter(e => e.lastCheck !== null).map(e => e.lastCheck!)
-  const lastCheck = checkTimes.length > 0 ?
-    checkTimes.reduce((latest, current) => 
-      new Date(current) > new Date(latest) ? current : latest
-    ) : null
-  
+  const uptimeValues = transformedEndpoints
+    .filter((e) => e.uptime !== null)
+    .map((e) => e.uptime!);
+  const avgUptime =
+    uptimeValues.length > 0
+      ? uptimeValues.reduce((sum, uptime) => sum + uptime, 0) /
+        uptimeValues.length
+      : null;
+
+  const responseTimeValues = transformedEndpoints
+    .filter((e) => e.responseTime !== null)
+    .map((e) => e.responseTime!);
+  const avgResponseTime =
+    responseTimeValues.length > 0
+      ? responseTimeValues.reduce((sum, time) => sum + time, 0) /
+        responseTimeValues.length
+      : null;
+
+  const checkTimes = transformedEndpoints
+    .filter((e) => e.lastCheck !== null)
+    .map((e) => e.lastCheck!);
+  const lastCheck =
+    checkTimes.length > 0
+      ? checkTimes.reduce((latest, current) =>
+          new Date(current) > new Date(latest) ? current : latest
+        )
+      : null;
+
   return {
     ...workspaceData,
     endpointCount: transformedEndpoints.length,
@@ -82,84 +108,86 @@ function transformWorkspaceData(workspaceData: any, endpointsData: any[]) {
     avgResponseTime: avgResponseTime,
     lastCheck: lastCheck,
     activeIncidents: offlineEndpoints,
-    endpoints: transformedEndpoints
-  }
+    endpoints: transformedEndpoints, // Keep this for WorkspaceChartsSection
+    rawEndpoints: rawEndpoints, // Add this for EndpointsTable
+  };
 }
 
 export default function WorkspaceDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const workspaceId = params.id as string
-  
+  const params = useParams();
+  const router = useRouter();
+  const workspaceId = params.id as string;
+
   // REPLACE: All manual data loading with these hooks
-  const { 
-    data: workspaceData, 
-    isLoading: workspaceLoading, 
+  const {
+    data: workspaceData,
+    isLoading: workspaceLoading,
     error: workspaceError,
-    refetch: refetchWorkspace
-  } = useWorkspace(workspaceId)
-  
-  const { 
-    data: endpointsData, 
-    isLoading: endpointsLoading, 
+    refetch: refetchWorkspace,
+  } = useWorkspace(workspaceId);
+
+  const {
+    data: endpointsData,
+    isLoading: endpointsLoading,
     error: endpointsError,
-    refetch: refetchEndpoints  
-  } = useWorkspaceEndpoints(workspaceId)
+    refetch: refetchEndpoints,
+  } = useWorkspaceEndpoints(workspaceId);
 
   // DERIVED STATE: Combine workspace and endpoints data
   const workspace = React.useMemo(() => {
-    if (!workspaceData || !endpointsData) return null
-    return transformWorkspaceData(workspaceData, endpointsData)
-  }, [workspaceData, endpointsData])
+    if (!workspaceData || !endpointsData) return null;
+    return transformWorkspaceData(workspaceData, endpointsData);
+  }, [workspaceData, endpointsData]);
 
-  const loading = workspaceLoading || endpointsLoading
-  const error = workspaceError || endpointsError
-  
+  const loading = workspaceLoading || endpointsLoading;
+  const error = workspaceError || endpointsError;
+
   // Modal states stay the same
-  const [addEndpointModalOpen, setAddEndpointModalOpen] = useState(false)
-  const [editWorkspaceModalOpen, setEditWorkspaceModalOpen] = useState(false)
-  const [deleteWorkspaceModalOpen, setDeleteWorkspaceModalOpen] = useState(false)
+  const [addEndpointModalOpen, setAddEndpointModalOpen] = useState(false);
+  const [editWorkspaceModalOpen, setEditWorkspaceModalOpen] = useState(false);
+  const [deleteWorkspaceModalOpen, setDeleteWorkspaceModalOpen] =
+    useState(false);
 
   // SIMPLIFIED: Manual refresh
   const handleManualRefresh = async () => {
-    console.log('🔄 Manual workspace refresh triggered')
-    await Promise.all([refetchWorkspace(), refetchEndpoints()])
-    toast.success('Workspace refreshed')
-  }
+    console.log("🔄 Manual workspace refresh triggered");
+    await Promise.all([refetchWorkspace(), refetchEndpoints()]);
+    toast.success("Workspace refreshed");
+  };
 
   // Handler functions for workspace actions
   const handleEditWorkspace = () => {
-    setEditWorkspaceModalOpen(true)
-  }
+    setEditWorkspaceModalOpen(true);
+  };
 
   const handleDeleteWorkspace = () => {
-    setDeleteWorkspaceModalOpen(true)
-  }
+    setDeleteWorkspaceModalOpen(true);
+  };
 
   // SIMPLIFIED: Success handlers - no manual refresh needed
   const handleWorkspaceEdited = () => {
-    setEditWorkspaceModalOpen(false)
+    setEditWorkspaceModalOpen(false);
     // No manual refresh - mutation handles cache invalidation
-  }
+  };
 
   const handleWorkspaceDeleted = () => {
-    setDeleteWorkspaceModalOpen(false)
-    toast.success('Workspace deleted successfully!')
-    router.push('/dashboard')
-  }
+    setDeleteWorkspaceModalOpen(false);
+    toast.success("Workspace deleted successfully!");
+    router.push("/dashboard");
+  };
 
   const handleAddEndpoint = () => {
-    setAddEndpointModalOpen(true)
-  }
+    setAddEndpointModalOpen(true);
+  };
 
   const handleEndpointAdded = () => {
-    setAddEndpointModalOpen(false)
+    setAddEndpointModalOpen(false);
     // No manual refresh - mutation handles cache invalidation
-  }
+  };
 
   const handleEndpointDeleted = () => {
     // No manual refresh - mutation handles cache invalidation
-  }
+  };
 
   if (loading) {
     return (
@@ -176,7 +204,7 @@ export default function WorkspaceDetailPage() {
           </div>
         </div>
       </ProtectedRoute>
-    )
+    );
   }
 
   if (error) {
@@ -190,7 +218,9 @@ export default function WorkspaceDetailPage() {
                 <div className="text-6xl mb-4">😞</div>
                 <h2 className="text-2xl font-bold text-white mb-2">Oops!</h2>
                 <p className="text-gray-400 mb-6">
-                  {error instanceof Error ? error.message : 'Failed to load workspace'}
+                  {error instanceof Error
+                    ? error.message
+                    : "Failed to load workspace"}
                 </p>
                 <div className="space-y-4">
                   <button
@@ -200,7 +230,7 @@ export default function WorkspaceDetailPage() {
                     Try Again
                   </button>
                   <button
-                    onClick={() => router.push('/dashboard')}
+                    onClick={() => router.push("/dashboard")}
                     className="block mx-auto text-gray-400 hover:text-white transition-colors"
                   >
                     Back to Dashboard
@@ -211,7 +241,7 @@ export default function WorkspaceDetailPage() {
           </div>
         </div>
       </ProtectedRoute>
-    )
+    );
   }
 
   if (!workspace) {
@@ -223,10 +253,14 @@ export default function WorkspaceDetailPage() {
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center">
                 <div className="text-6xl mb-4">🤷‍♂️</div>
-                <h2 className="text-2xl font-bold text-white mb-2">Workspace Not Found</h2>
-                <p className="text-gray-400 mb-6">The workspace you're looking for doesn't exist.</p>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  Workspace Not Found
+                </h2>
+                <p className="text-gray-400 mb-6">
+                  The workspace you're looking for doesn't exist.
+                </p>
                 <button
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push("/dashboard")}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                 >
                   Back to Dashboard
@@ -236,14 +270,14 @@ export default function WorkspaceDetailPage() {
           </div>
         </div>
       </ProtectedRoute>
-    )
+    );
   }
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-900 relative overflow-hidden">
         <AnimatedBackground />
-        
+
         <div className="relative z-10 container mx-auto px-6 py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -254,7 +288,7 @@ export default function WorkspaceDetailPage() {
             <WorkspaceHeader
               workspace={{
                 ...workspace,
-                createdAt: workspace.created_at
+                createdAt: workspace.created_at,
               }}
               onRefresh={handleManualRefresh}
               onAddEndpoint={handleAddEndpoint}
@@ -266,16 +300,14 @@ export default function WorkspaceDetailPage() {
             <div className="space-y-8">
               {/* Endpoints Table - REMOVE callback props */}
               <EndpointsTable
-                endpoints={workspace.endpoints}
+                endpoints={workspace.rawEndpoints} // Changed from workspace.endpoints
                 workspaceId={workspaceId}
-                onEndpointDeleted={handleEndpointDeleted} // Will remove this soon
+                onEndpointDeleted={handleEndpointDeleted}
                 onAddEndpoint={handleAddEndpoint}
               />
 
               {/* Charts Section */}
-              <WorkspaceChartsSection 
-                workspaceData={workspace}
-              />
+              <WorkspaceChartsSection workspaceData={workspace} />
             </div>
           </motion.div>
         </div>
@@ -295,11 +327,15 @@ export default function WorkspaceDetailPage() {
           isOpen={editWorkspaceModalOpen}
           onClose={() => setEditWorkspaceModalOpen(false)}
           onSuccess={handleWorkspaceEdited}
-          workspace={workspace ? {
-            id: workspace.id,
-            name: workspace.name,
-            description: workspace.description
-          } : null}
+          workspace={
+            workspace
+              ? {
+                  id: workspace.id,
+                  name: workspace.name,
+                  description: workspace.description,
+                }
+              : null
+          }
         />
 
         {/* Delete Workspace Modal */}
@@ -307,14 +343,18 @@ export default function WorkspaceDetailPage() {
           isOpen={deleteWorkspaceModalOpen}
           onClose={() => setDeleteWorkspaceModalOpen(false)}
           onSuccess={handleWorkspaceDeleted}
-          workspace={workspace ? {
-            id: workspace.id,
-            name: workspace.name,
-            description: workspace.description,
-            endpointCount: workspace.endpointCount
-          } : null}
+          workspace={
+            workspace
+              ? {
+                  id: workspace.id,
+                  name: workspace.name,
+                  description: workspace.description,
+                  endpointCount: workspace.endpointCount,
+                }
+              : null
+          }
         />
       </div>
     </ProtectedRoute>
-  )
+  );
 }

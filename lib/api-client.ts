@@ -145,7 +145,16 @@ export const endpointAPI = {
     return apiCall(`/api/workspaces/${workspaceId}/endpoints/${endpointId}`, {
       method: 'DELETE'
     })
+  },
+
+
+  // Manually Run Endpoint
+   async testEndpoint(workspaceId: string, endpointId: string) {
+    return apiCall(`/api/workspaces/${workspaceId}/endpoints/${endpointId}/test`, {
+      method: 'POST'
+    })
   }
+
 }
 
 // Health check
@@ -162,3 +171,4 @@ export const dashboardAPI = {
     return apiCall('/api/dashboard')
   }
 }
+

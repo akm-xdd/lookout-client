@@ -94,19 +94,6 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
     }
   }
 
-  const handleTestAll = () => {
-    if (!hasEndpoints) {
-      toast.info('No endpoints to test', {
-        description: 'Add some endpoints first',
-        duration: 3000,
-      })
-      return
-    }
-    toast.info('Testing all endpoints...', {
-      description: 'This feature is being built',
-      duration: 3000,
-    })
-  }
 
   const handleRefresh = () => {
     if (onRefresh) {
@@ -224,15 +211,6 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             <RefreshCw className="w-4 h-4" />
           </button>
 
-          <button
-            onClick={handleTestAll}
-            disabled={!hasEndpoints}
-            title={hasEndpoints ? 'Test all endpoints' : 'No endpoints to test'}
-            className="flex items-center space-x-2 p-2 bg-blue-500/20 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-all disabled:opacity-50 disabled:hover:bg-blue-500/20"
-          >
-            <Play className="w-4 h-4" />
-            <span className="text-sm">Test All</span>
-          </button>
 
           <button
             onClick={handleAddEndpoint}
