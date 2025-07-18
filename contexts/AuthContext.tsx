@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const pathname = usePathname();
 
   // Define public routes
-  const publicRoutes = ["/", "/login", "/register", "/auth/callback"];
+  const publicRoutes = ["/", "/login", "/register", "/auth/callback", "/privacy", "/terms", "/support"];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   useEffect(() => {
