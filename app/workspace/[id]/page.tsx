@@ -1,6 +1,5 @@
-// app/workspace/[id]/page.tsx - ENHANCED WITH EDIT/DELETE
 'use client'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState } from 'react'
 import { motion } from 'motion/react'
 import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
@@ -12,50 +11,19 @@ import WorkspaceChartsSection from '@/app/_components/workspace/WorkspaceChartsS
 import EndpointFormModal from '@/app/_components/workspace/EndpointFormModal'
 import EditWorkspaceModal from '@/app/_components/workspace/EditWorkspaceModal'
 import DeleteWorkspaceModal from '@/app/_components/workspace/DeleteWorkspaceModal'
-import { loadDashboardData, DashboardData, WorkspaceData } from '@/lib/data-loader'
-import { loadWorkspaceDataCached, refreshWorkspaceData } from '@/lib/cached-data-loader'
-import { cacheInvalidation } from '@/lib/data-loader'
 import { useRouter } from 'next/navigation'
-import { workspaceAPI, endpointAPI, APIError } from '@/lib/api-client'
 import { RefreshCw } from 'lucide-react'
 
-interface EndpointData {
-  id: string
-  name: string
-  url: string
-  method: string
-  status: 'online' | 'warning' | 'offline' | 'unknown'
-  uptime: number | null
-  responseTime: number | null
-  lastCheck: string | null
-  frequency: number
-}
+// NEW: Import hooks instead of manual data loading
+import { useWorkspace, useWorkspaceEndpoints } from '@/hooks/useWorkspace'
+import { useUpdateWorkspace, useDeleteWorkspace } from '@/hooks/useWorkspaces'
 
-interface WorkspaceDetailData {
-  id: string
-  name: string
-  description: string
-  created_at: string
-  updated_at: string
-  user_id: string
-  // Add computed fields for UI
-  endpointCount: number
-  maxEndpoints: number
-  status: 'online' | 'warning' | 'offline' | 'unknown'
-  uptime: number | null
-  avgResponseTime: number | null
-  lastCheck: string | null
-  activeIncidents: number
-  endpoints: EndpointData[]
-}
+// Import your existing transform function
+import { EndpointData } from '@/lib/data-loader'
 
-
-
-export default function WorkspaceDetailPage() {
-
-  const transformWorkspaceData = useCallback((workspaceData: any, endpointsData: any[]): WorkspaceDetailData => {
-  // Transform endpoints data with null handling
-  const transformedEndpoints: EndpointData[] = (endpointsData || []).map((endpoint: any) => ({
+// Transform function (keeping your existing logic)
+function transformEndpointData(endpoint: any): EndpointData {
+  return {
     id: endpoint.id,
     name: endpoint.name,
     url: endpoint.url,
@@ -65,7 +33,11 @@ export default function WorkspaceDetailPage() {
     responseTime: null,
     lastCheck: null,
     frequency: endpoint.frequency_minutes
-  }))
+  }
+}
+
+function transformWorkspaceData(workspaceData: any, endpointsData: any[]) {
+  const transformedEndpoints: EndpointData[] = (endpointsData || []).map(transformEndpointData)
   
   // Calculate workspace stats
   const onlineEndpoints = transformedEndpoints.filter(e => e.status === 'online').length
@@ -101,7 +73,6 @@ export default function WorkspaceDetailPage() {
       new Date(current) > new Date(latest) ? current : latest
     ) : null
   
-  // Return transformed workspace
   return {
     ...workspaceData,
     endpointCount: transformedEndpoints.length,
@@ -113,66 +84,48 @@ export default function WorkspaceDetailPage() {
     activeIncidents: offlineEndpoints,
     endpoints: transformedEndpoints
   }
-}, [])
+}
 
+export default function WorkspaceDetailPage() {
   const params = useParams()
   const router = useRouter()
   const workspaceId = params.id as string
   
-  const [workspace, setWorkspace] = useState<WorkspaceDetailData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // REPLACE: All manual data loading with these hooks
+  const { 
+    data: workspaceData, 
+    isLoading: workspaceLoading, 
+    error: workspaceError,
+    refetch: refetchWorkspace
+  } = useWorkspace(workspaceId)
   
-  // Modal states
+  const { 
+    data: endpointsData, 
+    isLoading: endpointsLoading, 
+    error: endpointsError,
+    refetch: refetchEndpoints  
+  } = useWorkspaceEndpoints(workspaceId)
+
+  // DERIVED STATE: Combine workspace and endpoints data
+  const workspace = React.useMemo(() => {
+    if (!workspaceData || !endpointsData) return null
+    return transformWorkspaceData(workspaceData, endpointsData)
+  }, [workspaceData, endpointsData])
+
+  const loading = workspaceLoading || endpointsLoading
+  const error = workspaceError || endpointsError
+  
+  // Modal states stay the same
   const [addEndpointModalOpen, setAddEndpointModalOpen] = useState(false)
   const [editWorkspaceModalOpen, setEditWorkspaceModalOpen] = useState(false)
   const [deleteWorkspaceModalOpen, setDeleteWorkspaceModalOpen] = useState(false)
 
-const loadWorkspaceData = useCallback(async () => {
-  try {
-    setLoading(true)
-    setError(null)
-    
-    const { workspaceData, endpointsData } = await loadWorkspaceDataCached(workspaceId)
-    
-    if (!workspaceData) {
-      setError('Workspace not found')
-      return
-    }
-    
-    const transformedWorkspace = transformWorkspaceData(workspaceData, endpointsData)
-    setWorkspace(transformedWorkspace)
-    
-  } catch (err) {
-    // ... existing error handling ...
-  } finally {
-    setLoading(false)
-  }
-}, [workspaceId, transformWorkspaceData])
-
-const handleManualRefresh = useCallback(async () => {
-  console.log('🔄 Manual workspace refresh triggered')
-  
-  try {
-    setLoading(true)
-    const { workspaceData, endpointsData } = await refreshWorkspaceData(workspaceId)
-    
-    if (!workspaceData) {
-      setError('Workspace not found')
-      return
-    }
-    
-    const transformedWorkspace = transformWorkspaceData(workspaceData, endpointsData)
-    setWorkspace(transformedWorkspace)
+  // SIMPLIFIED: Manual refresh
+  const handleManualRefresh = async () => {
+    console.log('🔄 Manual workspace refresh triggered')
+    await Promise.all([refetchWorkspace(), refetchEndpoints()])
     toast.success('Workspace refreshed')
-    
-  } catch (error) {
-    console.error('Refresh failed:', error)
-    toast.error('Failed to refresh workspace')
-  } finally {
-    setLoading(false)
   }
-}, [workspaceId, transformWorkspaceData])
 
   // Handler functions for workspace actions
   const handleEditWorkspace = () => {
@@ -183,41 +136,30 @@ const handleManualRefresh = useCallback(async () => {
     setDeleteWorkspaceModalOpen(true)
   }
 
-const handleWorkspaceEdited = () => {
-  setEditWorkspaceModalOpen(false)
-  cacheInvalidation.onWorkspaceChange(workspaceId) // Invalidate cache
-  loadWorkspaceData() // Reload from API
-  toast.success('Workspace updated successfully!')
-}
+  // SIMPLIFIED: Success handlers - no manual refresh needed
+  const handleWorkspaceEdited = () => {
+    setEditWorkspaceModalOpen(false)
+    // No manual refresh - mutation handles cache invalidation
+  }
 
   const handleWorkspaceDeleted = () => {
     setDeleteWorkspaceModalOpen(false)
     toast.success('Workspace deleted successfully!')
-    // Redirect to dashboard after successful deletion
     router.push('/dashboard')
   }
 
-  // Existing endpoint handlers
   const handleAddEndpoint = () => {
     setAddEndpointModalOpen(true)
   }
 
-const handleEndpointAdded = () => {
-  setAddEndpointModalOpen(false)
-  cacheInvalidation.onEndpointChange(workspaceId) // Invalidate cache
-  loadWorkspaceData() // Reload from API
-  toast.success('Endpoint added successfully!')
-}
+  const handleEndpointAdded = () => {
+    setAddEndpointModalOpen(false)
+    // No manual refresh - mutation handles cache invalidation
+  }
 
-const handleEndpointDeleted = () => {
-  cacheInvalidation.onEndpointChange(workspaceId) // Invalidate cache
-  loadWorkspaceData() // Reload from API
-  toast.success('Endpoint deleted successfully!')
-}
-
-  useEffect(() => {
-    loadWorkspaceData()
-  }, [loadWorkspaceData])
+  const handleEndpointDeleted = () => {
+    // No manual refresh - mutation handles cache invalidation
+  }
 
   if (loading) {
     return (
@@ -247,13 +189,23 @@ const handleEndpointDeleted = () => {
               <div className="text-center">
                 <div className="text-6xl mb-4">😞</div>
                 <h2 className="text-2xl font-bold text-white mb-2">Oops!</h2>
-                <p className="text-gray-400 mb-6">{error}</p>
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                >
-                  Back to Dashboard
-                </button>
+                <p className="text-gray-400 mb-6">
+                  {error instanceof Error ? error.message : 'Failed to load workspace'}
+                </p>
+                <div className="space-y-4">
+                  <button
+                    onClick={handleManualRefresh}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="block mx-auto text-gray-400 hover:text-white transition-colors"
+                  >
+                    Back to Dashboard
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -298,13 +250,13 @@ const handleEndpointDeleted = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Workspace Header with Edit/Delete handlers */}
+            {/* Workspace Header */}
             <WorkspaceHeader
               workspace={{
                 ...workspace,
                 createdAt: workspace.created_at
               }}
-              onRefresh={loadWorkspaceData}
+              onRefresh={handleManualRefresh}
               onAddEndpoint={handleAddEndpoint}
               onEditWorkspace={handleEditWorkspace}
               onDeleteWorkspace={handleDeleteWorkspace}
@@ -312,11 +264,11 @@ const handleEndpointDeleted = () => {
 
             {/* Main Content */}
             <div className="space-y-8">
-              {/* Endpoints Table */}
+              {/* Endpoints Table - REMOVE callback props */}
               <EndpointsTable
                 endpoints={workspace.endpoints}
                 workspaceId={workspaceId}
-                onEndpointDeleted={handleEndpointDeleted}
+                onEndpointDeleted={handleEndpointDeleted} // Will remove this soon
                 onAddEndpoint={handleAddEndpoint}
               />
 

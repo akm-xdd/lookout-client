@@ -1,9 +1,11 @@
-// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/sonner";
+
+
+import QueryProvider from "./_components/providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +32,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white min-h-screen`}
       >
-        <AuthProvider>
-          {children}
-          <Toaster richColors />
-        </AuthProvider>
+        {/* NEW: Use client component wrapper */}
+        <QueryProvider>
+          <AuthProvider>
+            {children}
+            <Toaster richColors />
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

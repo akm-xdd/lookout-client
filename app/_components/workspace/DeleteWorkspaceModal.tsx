@@ -1,8 +1,7 @@
-// components/workspace/DeleteWorkspaceModal.tsx
 import React, { useState } from 'react'
 import { X, Trash2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
-import { workspaceAPI, APIError } from '@/lib/api-client'
+import { useDeleteWorkspace } from '@/hooks/useWorkspaces' // NEW
 
 interface DeleteWorkspaceModalProps {
   isOpen: boolean
@@ -22,7 +21,8 @@ const DeleteWorkspaceModal: React.FC<DeleteWorkspaceModalProps> = ({
   onSuccess,
   workspace
 }) => {
-  const [loading, setLoading] = useState(false)
+  // REPLACE: Manual API call with mutation hook
+  const deleteWorkspace = useDeleteWorkspace()
   const [confirmationText, setConfirmationText] = useState('')
 
   const handleDelete = async () => {
@@ -34,10 +34,8 @@ const DeleteWorkspaceModal: React.FC<DeleteWorkspaceModalProps> = ({
       return
     }
 
-    setLoading(true)
-    
     try {
-      await workspaceAPI.deleteWorkspace(workspace.id)
+      await deleteWorkspace.mutateAsync(workspace.id)
       
       toast.success('Workspace deleted', {
         description: `"${workspace.name}" and all its endpoints have been removed`,
@@ -47,27 +45,18 @@ const DeleteWorkspaceModal: React.FC<DeleteWorkspaceModalProps> = ({
       onClose()
       onSuccess()
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Delete workspace error:', error)
       
-      if (error instanceof APIError) {
-        toast.error('Failed to delete workspace', {
-          description: error.message,
-          duration: 4000,
-        })
-      } else {
-        toast.error('Unexpected error', {
-          description: 'Please try again',
-          duration: 4000,
-        })
-      }
-    } finally {
-      setLoading(false)
+      toast.error('Failed to delete workspace', {
+        description: error?.message || 'Unknown error',
+        duration: 4000,
+      })
     }
   }
 
   const handleClose = () => {
-    if (!loading) {
+    if (!deleteWorkspace.isPending) { // CHANGED: Use isPending
       setConfirmationText('')
       onClose()
     }
@@ -97,7 +86,7 @@ const DeleteWorkspaceModal: React.FC<DeleteWorkspaceModalProps> = ({
           </div>
           <button
             onClick={handleClose}
-            disabled={loading}
+            disabled={deleteWorkspace.isPending} // CHANGED: Use isPending
             className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
           >
             <X className="w-5 h-5" />
@@ -142,7 +131,7 @@ const DeleteWorkspaceModal: React.FC<DeleteWorkspaceModalProps> = ({
           {/* Confirmation Input */}
           <div className="mb-4">
             <label className="block text-sm text-gray-400 mb-2">
-              Type <span className="font-mono text-white bg-white/10 px-1 rounded">{workspace.name}</span> to confirm:
+              Type <span className="font-mono text-white bg-white/10 px-1 rounded select-none">{workspace.name} </span> to confirm:
             </label>
             <input
               type="text"
@@ -150,7 +139,7 @@ const DeleteWorkspaceModal: React.FC<DeleteWorkspaceModalProps> = ({
               onChange={(e) => setConfirmationText(e.target.value)}
               placeholder="Enter workspace name"
               className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-white/20"
-              disabled={loading}
+              disabled={deleteWorkspace.isPending} // CHANGED: Use isPending
             />
           </div>
         </div>
@@ -160,17 +149,17 @@ const DeleteWorkspaceModal: React.FC<DeleteWorkspaceModalProps> = ({
           <button
             type="button"
             onClick={handleClose}
-            disabled={loading}
+            disabled={deleteWorkspace.isPending} // CHANGED: Use isPending
             className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleDelete}
-            disabled={loading || !isConfirmationValid}
+            disabled={deleteWorkspace.isPending || !isConfirmationValid} // CHANGED: Use isPending
             className="flex items-center space-x-2 px-6 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? (
+            {deleteWorkspace.isPending ? ( // CHANGED: Use isPending
               <>
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 <span>Deleting...</span>

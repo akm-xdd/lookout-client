@@ -1,4 +1,3 @@
-// components/dashboard/WorkspacesSection.tsx - WITH DELETE FUNCTIONALITY
 import React, { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -7,19 +6,17 @@ import CreateWorkspaceModal from '../workspace/CreateWorkspaceModal'
 import EditWorkspaceModal from '../workspace/EditWorkspaceModal'
 import DeleteWorkspaceModal from '../workspace/DeleteWorkspaceModal'
 import { DashboardData } from '@/lib/data-loader'
-import { cacheInvalidation } from '@/lib/data-loader'
-
 
 interface WorkspacesSectionProps {
   data: DashboardData
   loading?: boolean
-  onRefresh?: () => void
+  // REMOVED: onRefresh prop - not needed anymore!
 }
 
 const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({ 
   data, 
-  loading = false,
-  onRefresh 
+  loading = false
+  // REMOVED: onRefresh 
 }) => {
   const router = useRouter()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -45,15 +42,11 @@ const WorkspacesSection: React.FC<WorkspacesSectionProps> = ({
     setIsCreateModalOpen(true)
   }
 
-const handleCreateSuccess = () => {
-  setIsCreateModalOpen(false)
-  // Invalidate cache before triggering refresh
-  cacheInvalidation.onWorkspaceChange()
-  // Trigger data refresh when workspace is created
-  if (onRefresh) {
-    onRefresh()
+  // SIMPLIFIED: No manual refresh needed - mutations handle cache invalidation
+  const handleCreateSuccess = () => {
+    setIsCreateModalOpen(false)
+    // No manual refresh needed - useMutation handles cache invalidation automatically
   }
-}
 
   const handleEditWorkspace = (workspace: any) => {
     setWorkspaceToEdit({
@@ -64,19 +57,11 @@ const handleCreateSuccess = () => {
     setIsEditModalOpen(true)
   }
 
-const handleEditSuccess = () => {
-  setIsEditModalOpen(false)
-  setWorkspaceToEdit(null)
-  // Invalidate cache for the specific workspace
-  if (workspaceToEdit?.id) {
-    cacheInvalidation.onWorkspaceChange(workspaceToEdit.id)
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false)
+    setWorkspaceToEdit(null)
+    // No manual refresh needed - useMutation handles cache invalidation automatically
   }
-  // Trigger data refresh when workspace is edited
-  if (onRefresh) {
-    onRefresh()
-  }
-}
-
 
   const handleEditClose = () => {
     setIsEditModalOpen(false)
@@ -93,18 +78,11 @@ const handleEditSuccess = () => {
     setIsDeleteModalOpen(true)
   }
 
-const handleDeleteSuccess = () => {
-  setIsDeleteModalOpen(false)
-  // Invalidate cache for the deleted workspace
-  if (workspaceToDelete?.id) {
-    cacheInvalidation.onWorkspaceChange(workspaceToDelete.id)
+  const handleDeleteSuccess = () => {
+    setIsDeleteModalOpen(false)
+    setWorkspaceToDelete(null)
+    // No manual refresh needed - useMutation handles cache invalidation automatically
   }
-  setWorkspaceToDelete(null)
-  // Trigger data refresh when workspace is deleted
-  if (onRefresh) {
-    onRefresh()
-  }
-}
 
   const handleDeleteClose = () => {
     setIsDeleteModalOpen(false)
@@ -225,7 +203,7 @@ const handleDeleteSuccess = () => {
   )
 }
 
-// Loading skeleton component
+// Loading skeleton component - UNCHANGED
 const WorkspacesSectionLoading: React.FC = () => {
   return (
     <div className="mb-12">

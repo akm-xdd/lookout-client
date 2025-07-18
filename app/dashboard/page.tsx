@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React from "react";
 import { motion } from "motion/react";
 import { Settings, LogOut, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -9,109 +9,29 @@ import AnimatedBackground from "@/app/_components/layout/AnimatedBackground";
 import OverviewStatsSection from "../_components/dashboard/OverviewStatsSection";
 import ChartsSection from "../_components/dashboard/ChartsSection";
 import WorkspacesSection from "../_components/dashboard/WorkspacesSection";
-import { loadDashboardData, DashboardData } from "@/lib/data-loader";
-import { loadDashboardDataCached, refreshDashboardData } from "@/lib/cached-data-loader";
-import { cacheInvalidation } from "@/lib/data-loader";
+
+// NEW: Replace all your custom data loading with this single hook
+import { useDashboard } from "@/hooks/useDashboard";
+
 export default function DashboardPage() {
   const { user, signOut } = useAuth();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  // REPLACE: All the useState, useEffect, loadDashboardData, handleDataRefresh with this:
+  const { 
+    data: dashboardData, 
+    isLoading: loading, 
+    error,
+    refetch 
+  } = useDashboard()
 
-  useEffect(() => {
-    // if route is dashboard?success=true, show success toast
+  // SUCCESS TOAST: Keep your existing OAuth success handling
+  React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("success") === "oauth") {
-      // reset search params to avoid showing toast again
       window.history.replaceState({}, "", window.location.pathname);
       toast.success("Welcome back!");
     }
   }, []);
-
-  // Track if data has been loaded to prevent unnecessary refetches
-  const hasLoadedData = useRef(false);
-
-  // Load data function - keep user dependency but use user.id to prevent recreations
-const loadData = useCallback(async () => {
-  if (!user) return;
-
-  try {
-    setLoading(true);
-    setError(null);
-    console.log("🔄 Loading dashboard data...");
-
-    // Use cached version instead of direct API call
-    const dashData = await loadDashboardDataCached();
-
-    console.log("Dashboard data:", dashData);
-    console.log("Workspaces:", dashData?.workspaces);
-    console.log("Overview:", dashData?.overview);
-
-    // Merge user email from auth
-    if (dashData && user?.email) {
-      dashData.user.email = user.email;
-      dashData.user.id = user.id;
-    }
-
-    setDashboardData(dashData);
-    hasLoadedData.current = true;
-  } catch (loadError) {
-    console.error("Failed to load dashboard data:", loadError);
-    const errorMessage =
-      loadError instanceof Error ? loadError.message : "Unknown error";
-    setError(errorMessage);
-
-    toast.error("Failed to load dashboard", {
-      description: errorMessage,
-      duration: 5000,
-    });
-  } finally {
-    setLoading(false);
-  }
-}, [user?.id, user?.email]);
-  // Load data only once when user becomes available
-  useEffect(() => {
-    if (user && !hasLoadedData.current) {
-      loadData();
-    }
-  }, [user, loadData]);
-
-  // Handle data refresh (for when workspaces are created/updated)
-const handleDataRefresh = useCallback(async () => {
-  if (!user) return;
-  
-  console.log("🔄 Manual refresh triggered");
-  
-  try {
-    setLoading(true);
-    // Force refresh by clearing cache first
-    const dashData = await refreshDashboardData();
-    
-    // Merge user email from auth
-    if (dashData && user?.email) {
-      dashData.user.email = user.email;
-      dashData.user.id = user.id;
-    }
-
-    setDashboardData(dashData);
-    toast.success("Dashboard refreshed");
-  } catch (error) {
-    console.error("Refresh failed:", error);
-    toast.error("Failed to refresh dashboard");
-  } finally {
-    setLoading(false);
-  }
-}, [user?.id, user?.email]);
-
-// ADD THIS FUNCTION TO HANDLE WORKSPACE CHANGES:
-const handleWorkspaceChange = useCallback(() => {
-  // Invalidate cache when workspaces are modified
-  cacheInvalidation.onWorkspaceChange();
-  // Reload data
-  loadData();
-}, [loadData]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -124,12 +44,13 @@ const handleWorkspaceChange = useCallback(() => {
     });
   };
 
-  const handleRetry = () => {
-    hasLoadedData.current = false; // Reset the flag to allow retry
-    loadData();
-  };
+  // SIMPLIFIED: Manual refresh - no more complex cache invalidation!
+  const handleRefresh = async () => {
+    await refetch()
+    toast.success("Dashboard refreshed")
+  }
 
-  // Error state
+  // ERROR HANDLING: Much simpler now
   if (error && !loading) {
     return (
       <ProtectedRoute>
@@ -143,10 +64,12 @@ const handleWorkspaceChange = useCallback(() => {
                 <h1 className="text-3xl font-bold mb-4">
                   Unable to Load Dashboard
                 </h1>
-                <p className="text-gray-400 text-lg mb-8">{error}</p>
+                <p className="text-gray-400 text-lg mb-8">
+                  {error instanceof Error ? error.message : 'Unknown error occurred'}
+                </p>
                 <div className="space-y-4">
                   <button
-                    onClick={handleRetry}
+                    onClick={handleRefresh}
                     className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all mx-auto"
                   >
                     <RefreshCw className="w-5 h-5" />
@@ -187,7 +110,7 @@ const handleWorkspaceChange = useCallback(() => {
             <div className="flex items-center space-x-4">
               <span className="text-gray-400 text-sm">{user?.email}</span>
               <button
-                onClick={handleDataRefresh}
+                onClick={handleRefresh}
                 disabled={loading}
                 className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
                 title="Refresh data"
@@ -238,17 +161,16 @@ const handleWorkspaceChange = useCallback(() => {
               <OverviewStatsSection data={dashboardData} loading={loading} />
             )}
 
-            {/* Charts Section - Only show if there's data */}
+            {/* Charts Section */}
             {dashboardData && (
               <ChartsSection data={dashboardData} loading={loading} />
             )}
 
-            {/* Workspaces Section */}
+            {/* Workspaces Section - REMOVED onRefresh prop */}
             {dashboardData && (
               <WorkspacesSection
                 data={dashboardData}
                 loading={loading}
-                onRefresh={handleDataRefresh}
               />
             )}
           </div>

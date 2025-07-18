@@ -1,8 +1,7 @@
-// components/workspace/EditWorkspaceModal.tsx
 import React, { useState, useEffect } from 'react'
 import { X, Edit, Save } from 'lucide-react'
 import { toast } from 'sonner'
-import { workspaceAPI, APIError } from '@/lib/api-client'
+import { useUpdateWorkspace } from '@/hooks/useWorkspaces' // NEW
 
 interface EditWorkspaceModalProps {
   isOpen: boolean
@@ -21,7 +20,9 @@ const EditWorkspaceModal: React.FC<EditWorkspaceModalProps> = ({
   onSuccess,
   workspace
 }) => {
-  const [loading, setLoading] = useState(false)
+  // REPLACE: Manual API call with mutation hook
+  const updateWorkspace = useUpdateWorkspace()
+  
   const [formData, setFormData] = useState({
     name: '',
     description: ''
@@ -69,15 +70,16 @@ const EditWorkspaceModal: React.FC<EditWorkspaceModalProps> = ({
       return
     }
 
-    setLoading(true)
-    
     try {
       const updateData = {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined
       }
 
-      await workspaceAPI.updateWorkspace(workspace.id, updateData)
+      await updateWorkspace.mutateAsync({
+        workspaceId: workspace.id,
+        data: updateData
+      })
       
       toast.success('Workspace updated', {
         description: `"${updateData.name}" has been saved`,
@@ -87,27 +89,18 @@ const EditWorkspaceModal: React.FC<EditWorkspaceModalProps> = ({
       onClose()
       onSuccess()
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Update workspace error:', error)
       
-      if (error instanceof APIError) {
-        toast.error('Failed to update workspace', {
-          description: error.message,
-          duration: 4000,
-        })
-      } else {
-        toast.error('Unexpected error', {
-          description: 'Please try again',
-          duration: 4000,
-        })
-      }
-    } finally {
-      setLoading(false)
+      toast.error('Failed to update workspace', {
+        description: error?.message || 'Unknown error',
+        duration: 4000,
+      })
     }
   }
 
   const handleClose = () => {
-    if (!loading) {
+    if (!updateWorkspace.isPending) { // CHANGED: Use isPending
       // Reset form to original values
       if (workspace) {
         setFormData({
@@ -155,7 +148,7 @@ const EditWorkspaceModal: React.FC<EditWorkspaceModalProps> = ({
           </div>
           <button
             onClick={handleClose}
-            disabled={loading}
+            disabled={updateWorkspace.isPending} // CHANGED: Use isPending
             className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
           >
             <X className="w-5 h-5" />
@@ -177,7 +170,7 @@ const EditWorkspaceModal: React.FC<EditWorkspaceModalProps> = ({
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="Enter workspace name"
                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/50"
-                disabled={loading}
+                disabled={updateWorkspace.isPending} // CHANGED: Use isPending
                 maxLength={50}
               />
               <div className="flex justify-between mt-1">
@@ -204,7 +197,7 @@ const EditWorkspaceModal: React.FC<EditWorkspaceModalProps> = ({
                 placeholder="Describe what this workspace is for..."
                 rows={3}
                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/50 resize-none"
-                disabled={loading}
+                disabled={updateWorkspace.isPending} // CHANGED: Use isPending
                 maxLength={200}
               />
               <div className="flex justify-between mt-1">
@@ -218,23 +211,22 @@ const EditWorkspaceModal: React.FC<EditWorkspaceModalProps> = ({
             </div>
           </div>
          
-
           {/* Actions */}
           <div className="flex items-center justify-end space-x-3">
             <button
               type="button"
               onClick={handleClose}
-              disabled={loading}
+              disabled={updateWorkspace.isPending} // CHANGED: Use isPending
               className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={loading || !isFormValid || !hasChanges}
+              disabled={updateWorkspace.isPending || !isFormValid || !hasChanges} // CHANGED: Use isPending
               className="flex items-center space-x-2 px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (
+              {updateWorkspace.isPending ? ( // CHANGED: Use isPending
                 <>
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   <span>Saving...</span>

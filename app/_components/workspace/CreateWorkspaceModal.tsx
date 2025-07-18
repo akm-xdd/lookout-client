@@ -1,8 +1,7 @@
-// components/workspace/CreateWorkspaceModal.tsx
 import React, { useState } from 'react'
 import { X, Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { workspaceAPI, APIError } from '@/lib/api-client'
+import { useCreateWorkspace } from '@/hooks/useWorkspaces'
 
 interface CreateWorkspaceModalProps {
   isOpen: boolean
@@ -17,7 +16,9 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
 }) => {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [loading, setLoading] = useState(false)
+  
+  // REPLACE: Manual API call with mutation hook
+  const createWorkspace = useCreateWorkspace()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,10 +28,8 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
       return
     }
 
-    setLoading(true)
-    
     try {
-      await workspaceAPI.createWorkspace({
+      await createWorkspace.mutateAsync({
         name: name.trim(),
         description: description.trim() || undefined
       })
@@ -44,27 +43,18 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
       setName('')
       setDescription('')
       onClose()
-      onSuccess() // Trigger data refresh
+      onSuccess() // Still call this for modal state management
       
-    } catch (error) {
-      if (error instanceof APIError) {
-        toast.error('Failed to create workspace', {
-          description: error.message,
-          duration: 4000,
-        })
-      } else {
-        toast.error('Unexpected error', {
-          description: 'Please try again',
-          duration: 4000,
-        })
-      }
-    } finally {
-      setLoading(false)
+    } catch (error: any) {
+      toast.error('Failed to create workspace', {
+        description: error?.message || 'Unknown error',
+        duration: 4000,
+      })
     }
   }
 
   const handleClose = () => {
-    if (!loading) {
+    if (!createWorkspace.isPending) { // CHANGED: Use isPending instead of loading state
       setName('')
       setDescription('')
       onClose()
@@ -88,7 +78,7 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
           <h2 className="text-xl font-bold">Create Workspace</h2>
           <button
             onClick={handleClose}
-            disabled={loading}
+            disabled={createWorkspace.isPending} // CHANGED: Use isPending
             className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
           >
             <X className="w-5 h-5" />
@@ -108,7 +98,7 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
               placeholder="e.g., Personal Projects, SaaS App"
               maxLength={255}
               required
-              disabled={loading}
+              disabled={createWorkspace.isPending} // CHANGED: Use isPending
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 disabled:opacity-50"
             />
           </div>
@@ -123,7 +113,7 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
               placeholder="Optional description for this workspace"
               maxLength={1000}
               rows={3}
-              disabled={loading}
+              disabled={createWorkspace.isPending} // CHANGED: Use isPending
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 resize-none disabled:opacity-50"
             />
           </div>
@@ -133,17 +123,17 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              disabled={loading}
+              disabled={createWorkspace.isPending} // CHANGED: Use isPending
               className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={loading || !name.trim()}
+              disabled={createWorkspace.isPending || !name.trim()} // CHANGED: Use isPending
               className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (
+              {createWorkspace.isPending ? ( // CHANGED: Use isPending
                 <>
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   <span>Creating...</span>
