@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import Navbar from '@/app/_components/layout/Navbar'
 import Footer from '@/app/_components/layout/Footer'
 import AnimatedBackground from '@/app/_components/layout/AnimatedBackground'
+import AuthGuard from '@/app/auth/AuthGuard' // ADD THIS
 
 // Auth helpers
 import { authHelpers } from '@/lib/supabase'
@@ -100,128 +101,130 @@ export default function RegisterPage() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
-      className="min-h-screen bg-black text-white overflow-hidden"
-    >
-      <AnimatedBackground particleCount={20} />
-      
-      <Navbar />
+    <AuthGuard requireAuth={false}> {/* ADD THIS - block if logged in */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="min-h-screen bg-black text-white overflow-hidden"
+      >
+        <AnimatedBackground particleCount={20} />
+        
+        <Navbar />
 
-      <div className="relative z-10 px-6 py-20">
-        <div className="max-w-md mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-              Get Started
-            </h1>
-            <p className="text-gray-400">
-              Create your account and start monitoring your projects
-            </p>
-          </div>
-
-          {/* GitHub Register */}
-          <button
-            onClick={handleGitHubRegister}
-            disabled={loading}
-            className="w-full mb-6 px-6 py-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg hover:bg-white/10 transition-all flex items-center justify-center space-x-3 text-lg font-medium disabled:opacity-50"
-          >
-            <Github className="w-5 h-5" />
-            <span>Continue with GitHub</span>
-          </button>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-black text-gray-400">or</span>
-            </div>
-          </div>
-
-          {/* Email/Password Form */}
-          <form onSubmit={handleEmailRegister} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
-                  placeholder="Enter your email"
-                />
-              </div>
+        <div className="relative z-10 px-6 py-20">
+          <div className="max-w-md mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                Get Started
+              </h1>
+              <p className="text-gray-400">
+                Create your account and start monitoring your projects
+              </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
-                  placeholder="Create a password"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
-                  placeholder="Confirm your password"
-                />
-              </div>
-            </div>
-
+            {/* GitHub Register */}
             <button
-              type="submit"
+              onClick={handleGitHubRegister}
               disabled={loading}
-              className="group w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all flex items-center justify-center space-x-2 text-lg font-medium disabled:opacity-50"
+              className="w-full mb-6 px-6 py-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg hover:bg-white/10 transition-all flex items-center justify-center space-x-3 text-lg font-medium disabled:opacity-50"
             >
-              <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
-              {!loading && (
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              )}
+              <Github className="w-5 h-5" />
+              <span>Continue with GitHub</span>
             </button>
-          </form>
 
-          {/* Sign In Link */}
-          <div className="mt-8 text-center">
-            <p className="text-gray-400">
-              Already have an account?{' '}
-              <Link href="/login" className="text-blue-400 hover:text-blue-300 transition-colors">
-                Sign in
-              </Link>
-            </p>
+            {/* Divider */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-black text-gray-400">or</span>
+              </div>
+            </div>
+
+            {/* Email/Password Form */}
+            <form onSubmit={handleEmailRegister} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
+                    placeholder="Enter your email"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
+                    placeholder="Create a password"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
+                    placeholder="Confirm your password"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all flex items-center justify-center space-x-2 text-lg font-medium disabled:opacity-50"
+              >
+                <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+                {!loading && (
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                )}
+              </button>
+            </form>
+
+            {/* Sign In Link */}
+            <div className="mt-8 text-center">
+              <p className="text-gray-400">
+                Already have an account?{' '}
+                <Link href="/login" className="text-blue-400 hover:text-blue-300 transition-colors">
+                  Sign in
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <Footer />
-    </motion.div>
+        <Footer />
+      </motion.div>
+    </AuthGuard>
   )
 }
