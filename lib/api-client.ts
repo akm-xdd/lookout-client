@@ -92,6 +92,10 @@ export const workspaceAPI = {
 
   async getWorkspaceMonitoring(workspaceId: string) {
     return apiCall(`/api/workspaces/${workspaceId}/monitoring`)
+  },
+
+   async getWorkspaceStats(workspaceId: string) {
+    return apiCall(`/api/workspaces/${workspaceId}/stats`)
   }
 }
 

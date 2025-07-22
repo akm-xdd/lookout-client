@@ -62,6 +62,7 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'online': return 'text-green-400 bg-green-400/20 border-green-400/30'
+      case 'operational': return 'text-green-400 bg-green-400/20 border-green-400/30'
       case 'warning': return 'text-yellow-400 bg-yellow-400/20 border-yellow-400/30'
       case 'offline': return 'text-red-400 bg-red-400/20 border-red-400/30'
       case 'unknown': return 'text-gray-400 bg-gray-400/20 border-gray-400/30'
@@ -72,6 +73,7 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'online': return '●'
+      case 'operational': return '●'
       case 'warning': return '⚠'
       case 'offline': return '●'
       case 'unknown': return '○'

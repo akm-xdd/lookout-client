@@ -37,6 +37,7 @@ const defaultItems: DashboardItem[] = [
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'online':
+    case 'operational':
       return 'bg-green-500';
     case 'warning':
       return 'bg-yellow-500';

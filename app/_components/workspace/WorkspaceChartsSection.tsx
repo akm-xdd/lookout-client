@@ -1,7 +1,8 @@
-// components/workspace/WorkspaceChartsSection.tsx - UPDATED WITH REAL DATA
 import React from "react";
 import { formatUptime, formatResponseTime } from "@/lib/data-loader";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { HealthSummaryStats } from '@/lib/workspace-transformers';
+import { WorkspaceStatsIncident } from '@/hooks/useWorkspaceStats';
 
 interface WorkspaceChartsSectionProps {
   workspaceData: {
@@ -11,10 +12,9 @@ interface WorkspaceChartsSectionProps {
     uptime?: number | null;
     avgResponseTime?: number | null;
     activeIncidents?: number;
-    endpoints?: any[];
-    endpointData?: any[];
   };
-  // NEW: Pass endpoint stats for real monitoring data
+  
+  // Use monitoring data from unified endpoint
   endpointStats?: Array<{
     id: string;
     name: string;
@@ -29,6 +29,13 @@ interface WorkspaceChartsSectionProps {
     last_status_code: number | null;
     last_response_time: number | null;
   }>;
+  
+  // Pre-calculated health stats from unified endpoint
+  healthStats?: HealthSummaryStats;
+  
+  // Historical incidents from backend
+  recentIncidents?: WorkspaceStatsIncident[];
+  
   timeSeriesData?: Array<{
     timestamp: string;
     avg_response_time: number;
@@ -36,45 +43,34 @@ interface WorkspaceChartsSectionProps {
     total_checks: number;
     successful_checks: number;
   }>;
-  className?: string;
-
   
+  className?: string;
 }
 
 const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
   workspaceData,
   endpointStats = [],
+  healthStats,
+  recentIncidents = [],
   timeSeriesData = [],
   className = "",
 }) => {
-
-  console.log('🔍 WorkspaceChartsSection DEBUG:', {
+  
+  console.log('🔍 WorkspaceChartsSection DEBUG (UNIFIED):', {
     workspaceData,
     endpointStats,
     endpointStatsLength: endpointStats.length,
-    hasMonitoringData: endpointStats.length > 0
-  });
-
-   endpointStats.forEach((stat, index) => {
-    console.log(`🔍 Endpoint ${index + 1}:`, {
-      id: stat.id,
-      name: stat.name,
-      url: stat.url,
-      is_active: stat.is_active,
-      last_check_at: stat.last_check_at,
-      last_response_time: stat.last_response_time,
-      avg_response_time_24h: stat.avg_response_time_24h,
-      checks_last_24h: stat.checks_last_24h,
-      successful_checks_24h: stat.successful_checks_24h,
-      last_check_success: stat.last_check_success,
-      last_status_code: stat.last_status_code,
-      consecutive_failures: stat.consecutive_failures
-    });
+    healthStats,
+    hasHealthStats: !!healthStats,
+    healthStatsWeather: healthStats?.weather,
+    healthStatsEmoji: healthStats?.weather_emoji,
+    healthStatsDescription: healthStats?.weather_description,
+    hasMonitoringData: endpointStats.length > 0,
+    recentIncidents,
+    incidentCount: recentIncidents.length
   });
 
   const endpointCount = workspaceData.endpointCount ?? 0;
-  const endpoints = workspaceData.endpoints ?? workspaceData.endpointData ?? [];
-
   const hasEndpoints = endpointCount > 0;
   const hasMonitoringData = endpointStats.length > 0;
 
@@ -82,90 +78,22 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
     endpointCount,
     hasEndpoints,
     hasMonitoringData,
-    endpointsArray: endpoints
+    healthStatsActive: healthStats?.activeEndpoints
   });
 
-  const calculateRealStats = () => {
-    if (!hasMonitoringData) {
-      return {
-        totalChecks: 0,
-        successfulChecks: 0,
-        overallUptime: null,
-        avgResponseTime: null,
-        onlineEndpoints: 0,
-        warningEndpoints: 0,
-        offlineEndpoints: 0,
-        unknownEndpoints: endpointCount,
-        activeEndpoints: 0, // NEW: Track active endpoints separately
-        healthScore: null, // NEW: Calculated health score
-      };
-    }
-
-    let totalChecks = 0;
-    let successfulChecks = 0;
-    let responseTimes: number[] = [];
-    let onlineEndpoints = 0;
-    let warningEndpoints = 0;
-    let offlineEndpoints = 0;
-    let unknownEndpoints = 0;
-    let activeEndpoints = 0; // NEW: Count only active endpoints
-
-    endpointStats.forEach((stat) => {
-      // Aggregate check data
-      totalChecks += stat.checks_last_24h || 0;
-      successfulChecks += stat.successful_checks_24h || 0;
-
-      // Collect response times
-      if (stat.avg_response_time_24h) {
-        responseTimes.push(parseFloat(stat.avg_response_time_24h));
-      }
-
-      // Determine status and count
-      if (!stat.is_active) {
-        // CHANGED: Don't count deactivated endpoints in health calculation
-        // They're just "paused", not "failed"
-      } else {
-        activeEndpoints++; // NEW: Count active endpoints
-
-        if (stat.last_check_success === true) {
-          onlineEndpoints++;
-        } else if (stat.last_check_success === false) {
-          if ((stat.consecutive_failures || 0) >= 3) {
-            offlineEndpoints++;
-          } else {
-            warningEndpoints++;
-          }
-        } else {
-          unknownEndpoints++;
-        }
-      }
-    });
-
-    // NEW: Calculate health score only from active endpoints
-    const healthScore =
-      activeEndpoints === 0
-        ? null // No active endpoints to monitor
-        : Math.round((onlineEndpoints / activeEndpoints) * 100);
-
-    return {
-      totalChecks,
-      successfulChecks,
-      overallUptime:
-        totalChecks > 0 ? (successfulChecks / totalChecks) * 100 : null,
-      avgResponseTime:
-        responseTimes.length > 0
-          ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
-          : null,
-      onlineEndpoints,
-      warningEndpoints,
-      offlineEndpoints,
-      unknownEndpoints,
-      activeEndpoints, // NEW
-      healthScore, // NEW
-    };
+  // Use pre-calculated stats from backend instead of client-side calculation
+  const stats = healthStats || {
+    totalChecks: 0,
+    successfulChecks: 0,
+    overallUptime: null,
+    avgResponseTime: null,
+    onlineEndpoints: 0,
+    warningEndpoints: 0,
+    offlineEndpoints: 0,
+    unknownEndpoints: endpointCount,
+    activeEndpoints: 0,
+    healthScore: null,
   };
-
-  const stats = calculateRealStats();
 
   // Don't show charts if no endpoints
   if (endpointCount === 0) {
@@ -182,9 +110,9 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[
             {
-              title: "Response Time Trend",
-              subtitle: "Last 24 hours",
-              icon: "⚡",
+              title: "Performance Weather",
+              subtitle: "Workspace conditions",
+              icon: "🌤️",
             },
             {
               title: "Endpoint Comparison",
@@ -192,7 +120,7 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
               icon: "📊",
             },
             { title: "Health Summary", subtitle: "Current status", icon: "💚" },
-            { title: "Recent Activity", subtitle: "Latest checks", icon: "🔄" },
+            { title: "Recent Incidents", subtitle: "Issue tracking", icon: "🚨" },
           ].map((card, index) => (
             <div
               key={index}
@@ -228,69 +156,80 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Response Time Trend - TODO: Add real chart when we have time series data */}
+        {/* Performance Weather - Fun and unique status indicator */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-1">Response Time Trend</h3>
-            <p className="text-gray-400 text-sm">Last 24 hours</p>
+            <h3 className="text-lg font-semibold mb-1">Performance Weather</h3>
+            <p className="text-gray-400 text-sm">Current workspace conditions</p>
           </div>
 
-          {timeSeriesData.length > 0 ? (
-            <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={timeSeriesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="timestamp" 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                    tickFormatter={(value) => new Date(value).toLocaleTimeString('en-US', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  />
-                  <YAxis 
-                    stroke="#9CA3AF"
-                    fontSize={12}
-                    tickFormatter={(value) => `${value}ms`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#F9FAFB'
-                    }}
-                    labelFormatter={(value) => new Date(value).toLocaleString()}
-                    formatter={(value: number) => [`${value}ms`, 'Response Time']}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="avg_response_time" 
-                    stroke="#10B981" 
-                    strokeWidth={2}
-                    dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: '#10B981', strokeWidth: 2 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-gray-500">
-              <div className="text-center">
-                <div className="text-4xl mb-2">📈</div>
-                <p className="text-sm">No time series data available</p>
-                {stats.avgResponseTime && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    Current avg: {Math.round(stats.avgResponseTime)}ms
-                  </p>
-                )}
+          <div className="flex items-center justify-center h-[200px]">
+            <div className="text-center max-w-[280px] mx-auto px-4">
+              <div className="text-6xl mb-3">
+                {healthStats?.weather_emoji || "❓"}
               </div>
+              <div className="mb-3">
+                <h4 className="text-xl font-bold text-white mb-1">
+                  {healthStats?.weather ? 
+                    healthStats.weather.split('_').map(word => 
+                      word.charAt(0).toUpperCase() + word.slice(1)
+                    ).join(' ') : 
+                    'Unknown'
+                  }
+                </h4>
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  {healthStats?.weather_description || "Loading weather data..."}
+                </p>
+              </div>
+              
+              {/* Weather details - Show basic stats if no weather data */}
+              {healthStats?.healthScore !== null && healthStats?.healthScore !== undefined ? (
+                <div className="space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Health Score</span>
+                    <span className={`font-medium ${
+                      healthStats.healthScore! >= 95 ? "text-green-400" :
+                      healthStats.healthScore! >= 80 ? "text-yellow-400" : "text-red-400"
+                    }`}>
+                      {healthStats.healthScore!.toFixed(1)}%
+                    </span>
+                  </div>
+                  
+                  {(healthStats.offlineEndpoints + healthStats.warningEndpoints) > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400">Active Issues</span>
+                      <span className="font-medium text-red-400">
+                        {healthStats.offlineEndpoints + healthStats.warningEndpoints}
+                      </span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Forecast</span>
+                    <span className="text-green-400">
+                      {(healthStats.offlineEndpoints + healthStats.warningEndpoints) === 0 ? "Clear skies" : "Clearing up"}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                // Fallback when no health data available
+                <div className="space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Endpoints</span>
+                    <span className="font-medium text-white">
+                      {endpointStats.length}
+                    </span>
+                  </div>
+                  <div className="text-gray-500">
+                    Calculating weather...
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Endpoint Comparison - TODO: Add real chart */}
+        {/* Endpoint Comparison - Using unified monitoring data */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold mb-1">Endpoint Comparison</h3>
@@ -324,15 +263,15 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-medium text-white">
-                    {stat.last_response_time
-                      ? `${stat.last_response_time}ms`
-                      : "—"}
+                    {/* Use 24h average instead of last response time for consistency */}
+                    {stat.avg_response_time_24h
+                      ? `${Math.round(parseFloat(stat.avg_response_time_24h))}ms`
+                      : (stat.last_response_time ? `${stat.last_response_time}ms` : "—")}
                   </div>
                   <div className="text-xs text-gray-400">
                     {stat.checks_last_24h > 0
                       ? `${Math.round(
-                          (stat.successful_checks_24h / stat.checks_last_24h) *
-                            100
+                          (stat.successful_checks_24h / stat.checks_last_24h) * 100
                         )}%`
                       : "No data"}
                   </div>
@@ -344,7 +283,7 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Health Summary - NOW WITH REAL DATA */}
+        {/* Health Summary - With unified backend calculations */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold mb-1">Health Summary</h3>
@@ -400,9 +339,27 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Endpoints Online</span>
               <span className="font-semibold text-white">
-                {stats.onlineEndpoints}/{endpointCount}
+                {stats.onlineEndpoints}/{stats.activeEndpoints}
               </span>
             </div>
+
+            {/* Health Score from Backend */}
+            {stats.healthScore !== null && (
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Health Score</span>
+                <span
+                  className={`font-semibold ${
+                    stats.healthScore >= 95
+                      ? "text-green-400"
+                      : stats.healthScore >= 80
+                      ? "text-yellow-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {stats.healthScore.toFixed(1)}%
+                </span>
+              </div>
+            )}
 
             {/* Status Breakdown */}
             <div className="pt-2 border-t border-white/10 space-y-2">
@@ -442,88 +399,139 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
                     <div className="w-2 h-2 rounded-full bg-gray-500" />
                     <span className="text-gray-400">Unknown</span>
                   </div>
-                  <span className="text-gray-400">
-                    {stats.unknownEndpoints}
-                  </span>
+                  <span className="text-gray-400">{stats.unknownEndpoints}</span>
                 </div>
               )}
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-white/10">
-              <span className="text-gray-400">Health Score</span>
-              <span
-                className={`font-bold text-lg ${
-                  stats.healthScore === null
-                    ? "text-gray-400"
-                    : stats.healthScore >= 95
-                    ? "text-green-400"
-                    : stats.healthScore >= 80
-                    ? "text-yellow-400"
-                    : "text-red-400"
-                }`}
-              >
-                {stats.healthScore !== null ? `${stats.healthScore}%` : "N/A"}
-              </span>
-            </div>
-
-            {/* NEW: Show active vs total context */}
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <span>Active Monitoring</span>
-              <span>
-                {stats.activeEndpoints}/{endpointCount} endpoints
-              </span>
             </div>
           </div>
         </div>
 
-        {/* Recent Activity - TODO: Add real activity when we have time series */}
+        {/* Recent Incidents - Show historical incidents from backend */}
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-1">Recent Activity</h3>
-            <p className="text-gray-400 text-sm">Latest monitoring status</p>
+            <h3 className="text-lg font-semibold mb-1">Recent Incidents</h3>
+            <p className="text-gray-400 text-sm">Issues in the last 24 hours</p>
           </div>
 
           <div className="space-y-3 max-h-[200px] overflow-y-auto">
-            {endpointStats.map((stat) => (
-              <div
-                key={stat.id}
-                className="flex items-start space-x-3 p-3 bg-white/5 rounded-lg"
-              >
+            {(() => {
+              // Helper function to format duration
+              const formatDuration = (minutes: number) => {
+                if (minutes < 60) return `${minutes}m`;
+                const hours = Math.floor(minutes / 60);
+                const remainingMinutes = minutes % 60;
+                if (hours < 24) {
+                  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+                }
+                const days = Math.floor(hours / 24);
+                const remainingHours = hours % 24;
+                return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+              };
+
+              // Helper function to format relative time
+              const formatRelativeTime = (timestamp: string) => {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now.getTime() - date.getTime();
+                const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                
+                if (diffMinutes < 60) return `${diffMinutes}m ago`;
+                const diffHours = Math.floor(diffMinutes / 60);
+                if (diffHours < 24) return `${diffHours}h ago`;
+                const diffDays = Math.floor(diffHours / 24);
+                return `${diffDays}d ago`;
+              };
+
+              // Show incidents or no incidents message
+              if (recentIncidents.length === 0) {
+                return (
+                  <div className="flex items-center justify-center h-[120px] text-gray-500">
+                    <div className="text-center">
+                      <div className="text-3xl mb-2">✅</div>
+                      <p className="text-sm">No incidents in 24h</p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        All endpoints are healthy
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+
+              return recentIncidents.slice(0, 5).map((incident) => (
                 <div
-                  className={`w-3 h-3 rounded-full mt-1 ${
-                    !stat.is_active
-                      ? "bg-gray-500"
-                      : stat.last_check_success === true
-                      ? "bg-green-500"
-                      : stat.last_check_success === false
-                      ? "bg-red-500"
-                      : "bg-yellow-500"
+                  key={`${incident.endpoint_id}-${incident.start_time}`}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    incident.status === 'ongoing'
+                      ? 'bg-red-900/20 border-red-500/30'
+                      : 'bg-yellow-900/20 border-yellow-500/30'
                   }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-white truncate">
-                    {stat.name}
-                  </h4>
-                  <p className="text-xs text-gray-400">
-                    {stat.last_check_at
-                      ? `Last checked: ${new Date(
-                          stat.last_check_at
-                        ).toLocaleTimeString()}`
-                      : "Never checked"}
-                  </p>
-                  <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1">
-                    {stat.last_status_code && (
-                      <span>Status: {stat.last_status_code}</span>
-                    )}
-                    {stat.consecutive_failures > 0 && (
-                      <span className="text-red-400">
-                        {stat.consecutive_failures} failures
-                      </span>
-                    )}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className={`w-3 h-3 rounded-full ${
+                        incident.status === 'ongoing' 
+                          ? 'bg-red-500 animate-pulse' 
+                          : 'bg-yellow-500'
+                      }`} 
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-white truncate max-w-[120px]">
+                        {incident.endpoint_name}
+                      </div>
+                      <div className={`text-xs ${
+                        incident.status === 'ongoing' ? 'text-red-300' : 'text-yellow-300'
+                      }`}>
+                        {incident.status === 'ongoing' ? 'Ongoing' : 'Resolved'} • {formatDuration(incident.duration_minutes)}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {formatRelativeTime(incident.start_time)}
+                      </div>
+                      {incident.cause && incident.cause !== 'Connection failed' && (
+                        <div className="text-xs text-gray-500 truncate max-w-[150px]" title={incident.cause}>
+                          {incident.cause}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-xs font-medium ${
+                      incident.status === 'ongoing' ? 'text-red-400' : 'text-yellow-400'
+                    }`}>
+                      {incident.status_code > 0 ? `HTTP ${incident.status_code}` : "Network Error"}
+                    </div>
+                    <div className={`text-xs ${
+                      incident.status === 'ongoing' ? 'text-red-300' : 'text-yellow-300'
+                    }`}>
+                      {incident.failure_count} failures
+                    </div>
                   </div>
                 </div>
+              ));
+            })()}
+          </div>
+
+          {/* Summary footer */}
+          <div className="mt-4 pt-3 border-t border-white/10">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-400">Total Incidents (24h)</span>
+              <span className={`font-medium ${
+                recentIncidents.length > 0 
+                  ? recentIncidents.some(inc => inc.status === 'ongoing') 
+                    ? "text-red-400" 
+                    : "text-yellow-400"
+                  : "text-green-400"
+              }`}>
+                {recentIncidents.length}
+              </span>
+            </div>
+            {recentIncidents.some(inc => inc.status === 'ongoing') && (
+              <div className="flex items-center justify-between text-sm mt-1">
+                <span className="text-gray-400">Currently Active</span>
+                <span className="font-medium text-red-400">
+                  {recentIncidents.filter(inc => inc.status === 'ongoing').length}
+                </span>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

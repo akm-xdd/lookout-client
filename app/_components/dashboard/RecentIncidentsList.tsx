@@ -56,7 +56,7 @@ const RecentIncidentsList: React.FC<RecentIncidentsListProps> = ({
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <CheckCircle className="w-12 h-12 text-green-400 mb-3" />
           <h4 className="text-lg font-medium text-green-400 mb-2">All Clear!</h4>
-          <p className="text-gray-400 text-sm">No incidents in the last 30 days</p>
+          <p className="text-gray-400 text-sm">No incidents in the last 24 hours!</p>
         </div>
       </div>
     )

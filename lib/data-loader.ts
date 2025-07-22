@@ -146,6 +146,15 @@ export function getDashboardStats(data: DashboardData) {
   const finalAvgUptime = data.overview.avgUptime !== null 
     ? data.overview.avgUptime 
     : calculatedAvgUptime
+    
+  // ADD: Calculate average response time from workspace data
+  const workspaceResponseTimes = data.workspaces
+    .filter(ws => ws.avgResponseTime !== null && ws.avgResponseTime !== undefined)
+    .map(ws => ws.avgResponseTime!)
+  
+  const calculatedAvgResponseTime = workspaceResponseTimes.length > 0 
+    ? workspaceResponseTimes.reduce((sum, responseTime) => sum + responseTime, 0) / workspaceResponseTimes.length
+    : null
   
   return {
     totalWorkspaces: data.workspaces.length,
@@ -155,6 +164,7 @@ export function getDashboardStats(data: DashboardData) {
     offlineEndpoints: allEndpoints.filter(e => e.status === 'offline').length,
     unknownEndpoints: allEndpoints.filter(e => e.status === 'unknown').length,
     avgUptime: finalAvgUptime,
+    avgResponseTime: calculatedAvgResponseTime, // ADD: Include average response time
     activeIncidents: data.overview.activeIncidents
   }
 }
