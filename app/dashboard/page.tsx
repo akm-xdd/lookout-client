@@ -102,65 +102,16 @@ export default function DashboardPage() {
   if (loading || !dashboardData) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-screen bg-black text-white relative overflow-hidden">
           <AnimatedBackground particleCount={50} />
-
-          {/* Header with loading skeleton */}
-          <header className="relative z-10 border-b border-white/10">
-            <div className="max-w-7xl mx-auto px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <motion.div
-                    className="text-2xl font-bold"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    LookOut
-                  </motion.div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="animate-pulse">
-                    <div className="w-8 h-8 bg-white/10 rounded-full"></div>
-                  </div>
-                </div>
+          <div className="relative z-10 container mx-auto px-6 py-8">
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="text-center">
+                <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4" />
+                <p className="text-gray-400">Loading dashboard...</p>
               </div>
             </div>
-          </header>
-
-          <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-            {/* Loading skeleton */}
-            <div className="space-y-8">
-              <div className="animate-pulse">
-                <div className="h-8 bg-white/10 rounded w-64 mb-2"></div>
-                <div className="h-4 bg-white/10 rounded w-96"></div>
-              </div>
-              
-              {/* Stats skeleton */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-white/5 rounded-xl p-6">
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-white/10 rounded w-20 mb-2"></div>
-                      <div className="h-8 bg-white/10 rounded w-16"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Charts skeleton */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-white/5 rounded-xl p-6">
-                    <div className="animate-pulse">
-                      <div className="h-6 bg-white/10 rounded w-32 mb-4"></div>
-                      <div className="h-48 bg-white/10 rounded"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </main>
+          </div>
         </div>
       </ProtectedRoute>
     )
@@ -245,7 +196,7 @@ export default function DashboardPage() {
                 Welcome back! 👋
               </h1>
               <p className="text-gray-400">
-                Monitor your {dashboardData.overview.totalEndpoints} endpoints across {dashboardData.overview.totalWorkspaces} workspace{dashboardData.overview.totalWorkspaces !== 1 ? 's' : ''}
+                Here's how your endpoints have been performing recently.
               </p>
             </div>
 

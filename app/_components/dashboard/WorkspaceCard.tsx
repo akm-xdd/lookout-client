@@ -1,5 +1,3 @@
-// components/dashboard/WorkspaceCard.tsx - FIXED RESPONSE TIME LOGIC
-
 import React, { useState, useRef, useEffect } from "react";
 import { MoreVertical, Clock, AlertCircle, Edit, Trash2 } from "lucide-react";
 import { toast } from 'sonner'
@@ -161,17 +159,17 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 min-w-[120px]">
+            <div className="absolute right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 min-w-[120px] overflow-hidden">
               <button
                 onClick={handleEdit}
-                className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors first:rounded-t-lg"
               >
                 <Edit className="w-3 h-3" />
                 <span>Edit</span>
               </button>
               <button
                 onClick={handleDelete}
-                className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
+                className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors last:rounded-b-lg"
               >
                 <Trash2 className="w-3 h-3" />
                 <span>Delete</span>

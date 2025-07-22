@@ -131,7 +131,7 @@ const DeleteWorkspaceModal: React.FC<DeleteWorkspaceModalProps> = ({
           {/* Confirmation Input */}
           <div className="mb-4">
             <label className="block text-sm text-gray-400 mb-2">
-              Type <span className="font-mono text-white bg-white/10 px-1 rounded select-none">{workspace.name} </span> to confirm:
+              Type <span className="font-mono text-white bg-white/10 px-1 rounded select-none">{workspace.name}</span> to confirm:
             </label>
             <input
               type="text"
