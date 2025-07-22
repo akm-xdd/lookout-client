@@ -1,4 +1,3 @@
-// components/dashboard/ResponseTimeChart.tsx - FIXED VERSION
 "use client"
 
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts"
@@ -18,12 +17,11 @@ interface ResponseTimeChartProps {
 const chartConfig = {
   responseTime: {
     label: "Response Time: ",
-    color: "hsl(262 83% 58%)", // Use actual color value
+    color: "hsl(262 83% 58%)",
   },
 } satisfies ChartConfig
 
 const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({ data, className = "" }) => {
-  // Transform data for chart
   const chartData = data.responseTimeHistory.map((item) => ({
     time: new Date(item.timestamp).toLocaleTimeString('en-US', { 
       hour: 'numeric',
@@ -38,7 +36,7 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({ data, className =
       <div className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 ${className}`}>
         <div className="mb-4">
           <h3 className="text-lg font-semibold mb-1">Response Time</h3>
-          <p className="text-gray-400 text-sm">Last 5 hours</p>
+          <p className="text-gray-400 text-sm">Last 24 hours</p>
         </div>
         <div className="flex items-center justify-center h-[200px] text-gray-500">
           No response time data available
@@ -48,14 +46,74 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({ data, className =
   }
 
   const avgResponseTime = chartData.reduce((sum, item) => sum + item.responseTime, 0) / chartData.length
-  const trend = chartData.length > 1 ? 
-    chartData[chartData.length - 1].responseTime - chartData[0].responseTime : 0
+
+  // FIXED: Proper trend analysis that considers the context
+  const getTrendAnalysis = () => {
+    if (chartData.length < 2) return { direction: 'stable', change: 0, isValid: false }
+    
+    // Compare first quarter vs last quarter of data points for more stable analysis
+    const quarterSize = Math.max(1, Math.floor(chartData.length / 4))
+    
+    const firstQuarter = chartData.slice(0, quarterSize)
+    const lastQuarter = chartData.slice(-quarterSize)
+    
+    const firstAvg = firstQuarter.reduce((sum, item) => sum + item.responseTime, 0) / firstQuarter.length
+    const lastAvg = lastQuarter.reduce((sum, item) => sum + item.responseTime, 0) / lastQuarter.length
+    
+    const change = lastAvg - firstAvg
+    const percentageChange = Math.abs(change) / firstAvg * 100
+    
+    // Only show trend if change is significant (>10%)
+    if (percentageChange < 10) {
+      return { direction: 'stable', change, isValid: true }
+    }
+    
+    return {
+      direction: change > 0 ? 'slower' : 'faster',
+      change,
+      isValid: true,
+      percentageChange
+    }
+  }
+
+  const trend = getTrendAnalysis()
+
+  const getTrendIcon = () => {
+    if (!trend.isValid) return '→'
+    switch (trend.direction) {
+      case 'faster': return '↘'
+      case 'slower': return '↗'
+      default: return '→'
+    }
+  }
+
+  const getTrendText = () => {
+    if (!trend.isValid) return 'Not enough data'
+    
+    switch (trend.direction) {
+      case 'faster': 
+        return `${Math.abs(trend.change).toFixed(0)}ms faster`
+      case 'slower': 
+        return `${Math.abs(trend.change).toFixed(0)}ms slower`
+      default: 
+        return 'Stable performance'
+    }
+  }
+
+  const getTrendColor = () => {
+    if (!trend.isValid) return 'text-gray-400'
+    switch (trend.direction) {
+      case 'faster': return 'text-green-400'
+      case 'slower': return 'text-red-400'
+      default: return 'text-gray-400'
+    }
+  }
 
   return (
     <div className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 ${className}`}>
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-1">Response Time</h3>
-        <p className="text-gray-400 text-sm">Last 5 hours</p>
+        <p className="text-gray-400 text-sm">Last 24 hours</p>
       </div>
       
       <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
@@ -116,8 +174,9 @@ const ResponseTimeChart: React.FC<ResponseTimeChartProps> = ({ data, className =
         <div className="text-gray-400">
           Average: {Math.round(avgResponseTime)}ms
         </div>
-        <div className={trend > 0 ? "text-red-400" : "text-green-400"}>
-          {trend > 0 ? "↗" : "↘"} {trend > 0 ? "Slower" : "Faster"} than start
+        <div className={`flex items-center space-x-1 ${getTrendColor()}`}>
+          <span>{getTrendIcon()}</span>
+          <span>{getTrendText()}</span>
         </div>
       </div>
     </div>

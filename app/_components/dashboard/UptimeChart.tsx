@@ -58,8 +58,61 @@ const UptimeChart: React.FC<UptimeChartProps> = ({ data, className = "" }) => {
   const yAxisMin = Math.max(0, minUptime - padding)
   const yAxisMax = Math.min(100, maxUptime + padding)
 
-  // Use the overall uptime from overview data instead of calculating from chart data
-  const overallUptime = data.overallUptime
+  // FIXED: Calculate average from chart data or use avgUptime from data
+  const calculateAverageUptime = () => {
+    if (data.avgUptime !== null && data.avgUptime !== undefined) {
+      return data.avgUptime
+    }
+    
+    // Fallback: calculate from chart data
+    if (chartData.length > 0) {
+      const sum = chartData.reduce((acc, item) => acc + item.uptime, 0)
+      return sum / chartData.length
+    }
+    
+    return null
+  }
+
+  const averageUptime = calculateAverageUptime()
+
+  // Calculate actual trend based on data points
+  const getTrendAnalysis = () => {
+    if (chartData.length < 2) return { direction: 'stable', change: 0 }
+    
+    const firstValue = chartData[0].uptime
+    const lastValue = chartData[chartData.length - 1].uptime
+    const change = lastValue - firstValue
+    
+    if (Math.abs(change) < 2) return { direction: 'stable', change }
+    if (change > 0) return { direction: 'improving', change }
+    return { direction: 'declining', change }
+  }
+
+  const trend = getTrendAnalysis()
+
+  const getTrendIcon = () => {
+    switch (trend.direction) {
+      case 'improving': return '↗'
+      case 'declining': return '↘'
+      default: return '→'
+    }
+  }
+
+  const getTrendText = () => {
+    switch (trend.direction) {
+      case 'improving': return `Improving (+${Math.abs(trend.change).toFixed(1)}%)`
+      case 'declining': return `Declining (-${Math.abs(trend.change).toFixed(1)}%)`
+      default: return 'Stable'
+    }
+  }
+
+  const getTrendColor = () => {
+    switch (trend.direction) {
+      case 'improving': return 'text-green-400'
+      case 'declining': return 'text-red-400'
+      default: return 'text-gray-400'
+    }
+  }
 
   return (
     <div className={`bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 ${className}`}>
@@ -131,10 +184,11 @@ const UptimeChart: React.FC<UptimeChartProps> = ({ data, className = "" }) => {
       
       <div className="mt-4 flex items-center justify-between text-sm">
         <div className="text-gray-400">
-          Average: {overallUptime.toFixed(1)}%
+          Average: {averageUptime !== null ? `${averageUptime.toFixed(1)}%` : 'N/A'}
         </div>
-        <div className="text-green-400">
-          ↗ Trending stable
+        <div className={`flex items-center space-x-1 ${getTrendColor()}`}>
+          <span>{getTrendIcon()}</span>
+          <span>{getTrendText()}</span>
         </div>
       </div>
     </div>

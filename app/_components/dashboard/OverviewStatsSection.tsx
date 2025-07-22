@@ -1,4 +1,3 @@
-// components/dashboard/OverviewStatsSection.tsx - MINIMAL FIXES
 import React from 'react'
 import { Layers, Globe, TrendingUp, AlertTriangle } from 'lucide-react'
 import OverviewStatCard from './OverviewStatCard'
@@ -17,43 +16,66 @@ const OverviewStatsSection: React.FC<OverviewStatsSectionProps> = ({
     return <OverviewStatsLoading />
   }
 
+  // Add safety check for data
+  if (!data) {
+    return <OverviewStatsLoading />
+  }
+
   const stats = getDashboardStats(data)
+
+  // Helper function to safely format uptime
+  const formatUptimeValue = (uptime: number | null | undefined) => {
+    if (uptime === null || uptime === undefined || typeof uptime !== 'number') {
+      return '—'
+    }
+    return `${uptime.toFixed(1)}%`
+  }
+
+  // Helper function to get uptime color
+  const getUptimeColor = (uptime: number | null | undefined) => {
+    if (uptime === null || uptime === undefined || typeof uptime !== 'number') {
+      return 'gray'
+    }
+    if (uptime >= 99) return 'green'
+    if (uptime >= 95) return 'yellow'
+    return 'red'
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
       {/* Workspaces */}
       <OverviewStatCard
         title="Workspaces"
-        value={`${stats.totalWorkspaces}/${data.user.maxWorkspaces}`}
+        value={`${stats.totalWorkspaces}/${data.user?.maxWorkspaces ?? 5}`}
         subtitle={stats.totalWorkspaces === 0 ? 'Get started' : 'Active projects'}
         icon={Layers}
         color="blue"
         progress={{
           current: stats.totalWorkspaces,
-          max: data.user.maxWorkspaces
+          max: data.user?.maxWorkspaces ?? 5
         }}
       />
 
       {/* Total Endpoints */}
       <OverviewStatCard
         title="Total Endpoints"
-        value={`${stats.totalEndpoints}/${data.user.maxEndpoints}`}
+        value={`${stats.totalEndpoints}/${data.user?.maxEndpoints ?? 35}`}
         subtitle={stats.totalEndpoints === 0 ? 'No monitoring yet' : 'Being monitored'}
         icon={Globe}
         color="purple"
         progress={{
           current: stats.totalEndpoints,
-          max: data.user.maxEndpoints
+          max: data.user?.maxEndpoints ?? 35
         }}
       />
 
-      {/* Overall Uptime - FIXED TO HANDLE NULL VALUES */}
+      {/* Overall Uptime - SAFELY HANDLED */}
       <OverviewStatCard
         title="Overall Uptime"
-        value={stats.totalEndpoints === 0 || stats.avgUptime === null ? '—' : `${stats.avgUptime.toFixed(1)}%`}
+        value={formatUptimeValue(stats.avgUptime)}
         subtitle={stats.totalEndpoints === 0 ? 'No data yet' : stats.avgUptime === null ? 'No monitoring data' : 'Last 30 days'}
         icon={TrendingUp}
-        color={stats.avgUptime === null ? 'gray' : (stats.avgUptime >= 99 ? 'green' : stats.avgUptime >= 95 ? 'yellow' : 'red')}
+        color={getUptimeColor(stats.avgUptime)}
       />
 
       {/* Active Incidents */}

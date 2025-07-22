@@ -110,6 +110,13 @@ const TestResultsModal: React.FC<TestResultsModalProps> = ({
         success: result.success,
         timestamp: formatTimestamp(result.timestamp || Date.now())
       },
+      request_sent: result.request_config || {
+        url: result.url,
+        method: result.method,
+        headers: result.response_headers || result.headers || {},
+        body: result.request_body || null,
+        timeout_seconds: result.timeout_seconds || 30
+      },
       request_config: {
         expected_status: result.expected_status,
         timeout_seconds: result.timeout_seconds || 30
@@ -215,6 +222,39 @@ const TestResultsModal: React.FC<TestResultsModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Actual Request Sent (NEW SECTION) */}
+          {result.request_config && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b border-white/10 pb-2">Actual Request Sent</h3>
+              
+              {/* Request Headers */}
+              {result.request_config.headers && Object.keys(result.request_config.headers).length > 0 && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Headers Sent</label>
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
+                    <pre className="text-white text-sm whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+                      {Object.entries(result.request_config.headers)
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .join('\n')}
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              {/* Request Body */}
+              {result.request_config.body && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Body Sent</label>
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
+                    <pre className="text-white text-sm whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+                      {result.request_config.body}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Error Details */}
           {result.error && (

@@ -1,4 +1,5 @@
-// components/dashboard/WorkspaceCard.tsx - WITH DROPDOWN MENU
+// components/dashboard/WorkspaceCard.tsx - FIXED RESPONSE TIME LOGIC
+
 import React, { useState, useRef, useEffect } from "react";
 import { MoreVertical, Clock, AlertCircle, Edit, Trash2 } from "lucide-react";
 import { toast } from 'sonner'
@@ -17,8 +18,8 @@ interface WorkspaceDataWithCreated extends WorkspaceData {
 interface WorkspaceCardProps {
   workspace: WorkspaceDataWithCreated;
   onClick?: () => void;
-  onEdit?: () => void; // Add callback for edit action
-  onDelete?: () => void; // Add callback for delete action
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
@@ -39,6 +40,21 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   const hasEndpoints = endpointCount > 0;
   const hasData = hasEndpoints && uptime !== null && avgResponseTime !== null;
 
+  // FIXED: Smart response time display logic
+  const shouldShowResponseTime = () => {
+    // Don't show response time if:
+    // 1. No endpoints or no data
+    if (!hasData) return false;
+    
+    // 2. Workspace status is offline
+    if (status === 'offline') return false;
+    
+    // 3. Uptime is 0% or very low (< 5%)
+    if (uptime !== null && uptime < 5) return false;
+    
+    return true;
+  };
+
   // Dropdown state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -58,10 +74,12 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "online":
+      case "operational": // ADD: Map operational to green
         return "text-green-400 bg-green-400/20";
       case "warning":
         return "text-yellow-400 bg-yellow-400/20";
       case "offline":
+      case "down": // ADD: Map down to red
         return "text-red-400 bg-red-400/20";
       case "unknown":
         return "text-gray-400 bg-gray-400/20";
@@ -73,10 +91,12 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "online":
+      case "operational": // ADD: Map operational to online icon
         return "●";
       case "warning":
         return "⚠";
       case "offline":
+      case "down": // ADD: Map down to offline icon
         return "●";
       case "unknown":
         return "○";
@@ -94,153 +114,83 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   };
 
   const handleDropdownClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     setIsDropdownOpen(!isDropdownOpen);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDropdownOpen(false);
-    
-    // Call the onEdit callback if provided
-    if (onEdit) {
-      onEdit();
-    } else {
-      toast.info('Coming soon!', {
-        description: 'Edit workspace functionality is being built',
-        duration: 3000,
-      });
-    }
+    onEdit?.();
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDropdownOpen(false);
-    
-    // Call the onDelete callback if provided
-    if (onDelete) {
-      onDelete();
-    } else {
-      toast.info('Delete workspace', {
-        description: 'Delete functionality will be implemented soon',
-        duration: 3000,
-      });
-    }
+    onDelete?.();
   };
 
   return (
     <div
-      className="group bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 hover:bg-white/8 transition-all cursor-pointer relative"
+      className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 hover:bg-white/8 transition-all cursor-pointer group relative"
       onClick={handleCardClick}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center space-x-4 mb-2">
-            <h3 className="text-lg font-semibold text-white">
-              {workspace.name}
-            </h3>
-
-            {/* Only show status if there's at least one endpoint */}
-            {hasEndpoints && (
-              <div
-                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                  status
-                )}`}
-              >
-                <span className="mr-1">{getStatusIcon(status)}</span>
-                {status}
-              </div>
-            )}
+      {/* Header with title, status and dropdown */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <h3 className="text-lg font-semibold text-white truncate max-w-[180px]">
+            {workspace.name}
+          </h3>
+          <div
+            className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(
+              status
+            )}`}
+          >
+            <span>{getStatusIcon(status)}</span>
+            <span>{status}</span>
           </div>
         </div>
-        
+
         {/* Dropdown Menu */}
         <div className="relative" ref={dropdownRef}>
-          <button 
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-white/10 rounded-lg"
+          <button
             onClick={handleDropdownClick}
+            className="p-2 text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
           >
-            <MoreVertical className="w-4 h-4 text-gray-400" />
+            <MoreVertical className="w-4 h-4" />
           </button>
 
-          {/* Dropdown Content */}
           {isDropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 border border-white/10 rounded-lg shadow-lg z-10">
-              <div className="py-2">
-                {/* Edit Option */}
-                <button
-                  onClick={handleEdit}
-                  className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                  <span>Edit Workspace</span>
-                </button>
-                
-                {/* Divider */}
-                <div className="border-t border-white/10 my-1" />
-                
-                {/* Delete Option */}
-                <button
-                  onClick={handleDelete}
-                  className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Delete Workspace</span>
-                </button>
-              </div>
+            <div className="absolute right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10 min-w-[120px]">
+              <button
+                onClick={handleEdit}
+                className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+              >
+                <Edit className="w-3 h-3" />
+                <span>Edit</span>
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>Delete</span>
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Description */}
-      {workspace.description && (
-        <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-          {workspace.description}
-        </p>
-      )}
-
-      {/* Endpoint Status Dots (or placeholder) */}
-      <div className="flex items-center space-x-1 mb-4">
-        {hasEndpoints ? (
-          <>
-            {endpoints.slice(0, 7).map((endpoint, i) => (
-              <div
-                key={endpoint.id || i}
-                className={`w-2 h-2 rounded-full ${
-                  endpoint.status === "online"
-                    ? "bg-green-400"
-                    : endpoint.status === "warning"
-                    ? "bg-yellow-400"
-                    : endpoint.status === "offline"
-                    ? "bg-red-400"
-                    : "bg-gray-400"
-                }`}
-                title={`${endpoint.name}: ${endpoint.status}`}
-              />
-            ))}
-            {endpointCount > 7 && (
-              <span className="text-xs text-gray-400 ml-2">
-                +{endpointCount - 7}
-              </span>
-            )}
-          </>
-        ) : (
-          <span className="text-xs text-gray-500 italic">
-            No endpoints configured yet
-          </span>
-        )}
+      {/* Endpoints indicator */}
+      <div className="mb-4">
+        <div className="text-gray-400 text-sm mb-1">Endpoints</div>
+        <div className="text-white font-medium">
+          {endpointCount}/{maxEndpoints}
+        </div>
       </div>
 
-      {/* Metrics Grid (endpoints always shown; uptime/response only if data exists) */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div>
-          <div className="text-sm text-gray-400 mb-1">Endpoints</div>
-          <div className="text-white font-medium">
-            {endpointCount}/{maxEndpoints}
-          </div>
-        </div>
+      {/* Stats row: Uptime and Response time */}
+      <div className="grid grid-cols-2 gap-6 mb-4">
         <div>
           <div className="text-sm text-gray-400 mb-1">Uptime</div>
           <div className="text-white font-medium">
@@ -250,7 +200,8 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         <div>
           <div className="text-sm text-gray-400 mb-1">Response</div>
           <div className="text-white font-medium">
-            {hasData ? formatResponseTime(avgResponseTime) : "—"}
+            {/* FIXED: Smart response time logic */}
+            {shouldShowResponseTime() ? formatResponseTime(avgResponseTime) : "—"}
           </div>
         </div>
       </div>

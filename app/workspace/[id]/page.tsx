@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { motion } from "motion/react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query"; // ADD THIS
 import ProtectedRoute from "@/app/auth/ProtectedRoute";
 import AnimatedBackground from "@/app/_components/layout/AnimatedBackground";
 import WorkspaceHeader from "@/app/_components/workspace/WorkspaceHeader";
@@ -13,6 +14,7 @@ import EditWorkspaceModal from "@/app/_components/workspace/EditWorkspaceModal";
 import DeleteWorkspaceModal from "@/app/_components/workspace/DeleteWorkspaceModal";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
+import { workspaceAPI } from '@/lib/api-client'
 
 // NEW: Import hooks instead of manual data loading
 import { useWorkspace, useWorkspaceEndpoints } from "@/hooks/useWorkspace";
@@ -21,28 +23,56 @@ import { useUpdateWorkspace, useDeleteWorkspace } from "@/hooks/useWorkspaces";
 // Import your existing transform function
 import { EndpointData } from "@/lib/data-loader";
 
-// Transform function (keeping your existing logic)
-function transformEndpointData(endpoint: any): EndpointData {
+// NEW: Add monitoring stats hook
+const useWorkspaceMonitoring = (workspaceId: string) => {
+  return useQuery({
+    queryKey: ['workspace-monitoring', workspaceId],
+    queryFn: () => workspaceAPI.getWorkspaceMonitoring(workspaceId),
+    refetchInterval: 30000,
+    enabled: !!workspaceId
+  });
+};
+
+// Transform function (updated with real monitoring data)
+function transformEndpointData(endpoint: any, monitoringStats: any[]): EndpointData {
+  const stat = monitoringStats.find(s => s.id === endpoint.id);
+  
+  // Determine real status based on monitoring data
+  let status: "online" | "warning" | "offline" | "unknown" = "unknown";
+  if (!endpoint.is_active) {
+    status = "offline";
+  } else if (stat?.last_check_success === true) {
+    status = "online";
+  } else if (stat?.last_check_success === false) {
+    status = (stat?.consecutive_failures || 0) >= 3 ? "offline" : "warning";
+  }
+
+  // Calculate uptime percentage
+  let uptime: number | null = null;
+  if (stat?.checks_last_24h > 0) {
+    uptime = (stat.successful_checks_24h / stat.checks_last_24h) * 100;
+  }
+
   return {
     id: endpoint.id,
     name: endpoint.name,
     url: endpoint.url,
     method: endpoint.method,
-    status: endpoint.is_active ? "unknown" : "offline",
-    uptime: null,
-    responseTime: null,
-    lastCheck: null,
+    status,
+    uptime,
+    responseTime: stat?.last_response_time || null,
+    lastCheck: stat?.last_check_at || null,
     frequency: endpoint.frequency_minutes,
   };
 }
 
-function transformWorkspaceData(workspaceData: any, endpointsData: any[]) {
+function transformWorkspaceData(workspaceData: any, endpointsData: any[], monitoringStats: any[]) {
   // Keep the raw endpoints data instead of transforming it
   const rawEndpoints = endpointsData || [];
 
-  // Calculate workspace stats from raw data (for existing logic)
+  // Calculate workspace stats from raw data WITH REAL MONITORING
   const transformedEndpoints: EndpointData[] = rawEndpoints.map(
-    transformEndpointData
+    endpoint => transformEndpointData(endpoint, monitoringStats)
   );
 
   // Calculate workspace stats
@@ -70,7 +100,7 @@ function transformWorkspaceData(workspaceData: any, endpointsData: any[]) {
     workspaceStatus = "unknown";
   }
 
-  // Calculate averages
+  // Calculate averages FROM REAL DATA
   const uptimeValues = transformedEndpoints
     .filter((e) => e.uptime !== null)
     .map((e) => e.uptime!);
@@ -118,7 +148,7 @@ export default function WorkspaceDetailPage() {
   const router = useRouter();
   const workspaceId = params.id as string;
 
-  // REPLACE: All manual data loading with these hooks
+  // EXISTING: All manual data loading with these hooks
   const {
     data: workspaceData,
     isLoading: workspaceLoading,
@@ -133,14 +163,22 @@ export default function WorkspaceDetailPage() {
     refetch: refetchEndpoints,
   } = useWorkspaceEndpoints(workspaceId);
 
-  // DERIVED STATE: Combine workspace and endpoints data
+  // NEW: Add monitoring data hook
+  const {
+    data: monitoringStats,
+    isLoading: monitoringLoading,
+    error: monitoringError,
+    refetch: refetchMonitoring,
+  } = useWorkspaceMonitoring(workspaceId);
+
+  // UPDATED: Combine workspace, endpoints AND monitoring data
   const workspace = React.useMemo(() => {
     if (!workspaceData || !endpointsData) return null;
-    return transformWorkspaceData(workspaceData, endpointsData);
-  }, [workspaceData, endpointsData]);
+    return transformWorkspaceData(workspaceData, endpointsData, monitoringStats || []);
+  }, [workspaceData, endpointsData, monitoringStats]);
 
-  const loading = workspaceLoading || endpointsLoading;
-  const error = workspaceError || endpointsError;
+  const loading = workspaceLoading || endpointsLoading || monitoringLoading;
+  const error = workspaceError || endpointsError || monitoringError;
 
   // Modal states stay the same
   const [addEndpointModalOpen, setAddEndpointModalOpen] = useState(false);
@@ -148,14 +186,18 @@ export default function WorkspaceDetailPage() {
   const [deleteWorkspaceModalOpen, setDeleteWorkspaceModalOpen] =
     useState(false);
 
-  // SIMPLIFIED: Manual refresh
+  // UPDATED: Manual refresh includes monitoring data
   const handleManualRefresh = async () => {
     console.log("🔄 Manual workspace refresh triggered");
-    await Promise.all([refetchWorkspace(), refetchEndpoints()]);
+    await Promise.all([
+      refetchWorkspace(), 
+      refetchEndpoints(), 
+      refetchMonitoring() // ADD THIS
+    ]);
     toast.success("Workspace refreshed");
   };
 
-  // Handler functions for workspace actions
+  // Handler functions for workspace actions (unchanged)
   const handleEditWorkspace = () => {
     setEditWorkspaceModalOpen(true);
   };
@@ -164,10 +206,8 @@ export default function WorkspaceDetailPage() {
     setDeleteWorkspaceModalOpen(true);
   };
 
-  // SIMPLIFIED: Success handlers - no manual refresh needed
   const handleWorkspaceEdited = () => {
     setEditWorkspaceModalOpen(false);
-    // No manual refresh - mutation handles cache invalidation
   };
 
   const handleWorkspaceDeleted = () => {
@@ -182,7 +222,6 @@ export default function WorkspaceDetailPage() {
 
   const handleEndpointAdded = () => {
     setAddEndpointModalOpen(false);
-    // No manual refresh - mutation handles cache invalidation
   };
 
   const handleEndpointDeleted = () => {
@@ -298,21 +337,25 @@ export default function WorkspaceDetailPage() {
 
             {/* Main Content */}
             <div className="space-y-8">
-              {/* Endpoints Table - REMOVE callback props */}
+              {/* Endpoints Table */}
               <EndpointsTable
-                endpoints={workspace.rawEndpoints} // Changed from workspace.endpoints
+                endpoints={workspace.rawEndpoints}
                 workspaceId={workspaceId}
                 onEndpointDeleted={handleEndpointDeleted}
                 onAddEndpoint={handleAddEndpoint}
               />
 
-              {/* Charts Section */}
-              <WorkspaceChartsSection workspaceData={workspace} />
+              {/* Charts Section - NOW WITH REAL MONITORING DATA */}
+              <WorkspaceChartsSection 
+                workspaceData={workspace} 
+                endpointStats={monitoringStats || []}
+                // timeSeriesData={timeSeriesData || []}
+              />
             </div>
           </motion.div>
         </div>
 
-        {/* Add Endpoint Modal */}
+        {/* Modals (unchanged) */}
         <EndpointFormModal
           workspaceId={workspaceId}
           maxEndpoints={workspace.maxEndpoints}
@@ -322,7 +365,6 @@ export default function WorkspaceDetailPage() {
           onSuccess={handleEndpointAdded}
         />
 
-        {/* Edit Workspace Modal */}
         <EditWorkspaceModal
           isOpen={editWorkspaceModalOpen}
           onClose={() => setEditWorkspaceModalOpen(false)}
@@ -338,7 +380,6 @@ export default function WorkspaceDetailPage() {
           }
         />
 
-        {/* Delete Workspace Modal */}
         <DeleteWorkspaceModal
           isOpen={deleteWorkspaceModalOpen}
           onClose={() => setDeleteWorkspaceModalOpen(false)}

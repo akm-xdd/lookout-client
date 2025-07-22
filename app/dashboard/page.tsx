@@ -10,21 +10,22 @@ import OverviewStatsSection from "../_components/dashboard/OverviewStatsSection"
 import ChartsSection from "../_components/dashboard/ChartsSection";
 import WorkspacesSection from "../_components/dashboard/WorkspacesSection";
 
-// NEW: Replace all your custom data loading with this single hook
+// NEW: Single comprehensive dashboard hook
 import { useDashboard } from "@/hooks/useDashboard";
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth();
   
-  // REPLACE: All the useState, useEffect, loadDashboardData, handleDataRefresh with this:
+  // SIMPLIFIED: Single hook provides all dashboard data
   const { 
     data: dashboardData, 
     isLoading: loading, 
     error,
-    refetch 
+    refetch,
+    isFetching // ADD: Track if currently fetching (for refresh button)
   } = useDashboard()
 
-  // SUCCESS TOAST: Keep your existing OAuth success handling
+  // OAuth success handling
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("success") === "oauth") {
@@ -44,13 +45,18 @@ export default function DashboardPage() {
     });
   };
 
-  // SIMPLIFIED: Manual refresh - no more complex cache invalidation!
+  // Manual refresh with toast feedback and loading state
   const handleRefresh = async () => {
-    await refetch()
-    toast.success("Dashboard refreshed")
+    const refreshPromise = refetch()
+    
+    toast.promise(refreshPromise, {
+      loading: 'Refreshing dashboard...',
+      success: 'Dashboard updated!',
+      error: 'Failed to refresh dashboard'
+    })
   }
 
-  // ERROR HANDLING: Much simpler now
+  // Error state
   if (error && !loading) {
     return (
       <ProtectedRoute>
@@ -65,117 +71,195 @@ export default function DashboardPage() {
                   Unable to Load Dashboard
                 </h1>
                 <p className="text-gray-400 text-lg mb-8">
-                  {error instanceof Error ? error.message : 'Unknown error occurred'}
+                  {error instanceof Error ? error.message : "Something went wrong while loading your dashboard data."}
                 </p>
-                <div className="space-y-4">
+                
+                <div className="flex gap-4 justify-center">
                   <button
                     onClick={handleRefresh}
-                    className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all mx-auto"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
                   >
-                    <RefreshCw className="w-5 h-5" />
-                    <span>Retry</span>
+                    <RefreshCw className="w-4 h-4" />
+                    Try Again
                   </button>
-                  <p className="text-gray-500 text-sm">
-                    Make sure your FastAPI server is running on port 8000
-                  </p>
+                  
+                  <button
+                    onClick={handleSignOut}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Sign Out
+                  </button>
                 </div>
               </div>
             </div>
           </main>
         </div>
       </ProtectedRoute>
-    );
+    )
+  }
+
+  // Loading state
+  if (loading || !dashboardData) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-black text-white">
+          <AnimatedBackground particleCount={50} />
+
+          {/* Header with loading skeleton */}
+          <header className="relative z-10 border-b border-white/10">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <motion.div
+                    className="text-2xl font-bold"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    LookOut
+                  </motion.div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <div className="animate-pulse">
+                    <div className="w-8 h-8 bg-white/10 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+            {/* Loading skeleton */}
+            <div className="space-y-8">
+              <div className="animate-pulse">
+                <div className="h-8 bg-white/10 rounded w-64 mb-2"></div>
+                <div className="h-4 bg-white/10 rounded w-96"></div>
+              </div>
+              
+              {/* Stats skeleton */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white/5 rounded-xl p-6">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-white/10 rounded w-20 mb-2"></div>
+                      <div className="h-8 bg-white/10 rounded w-16"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Charts skeleton */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white/5 rounded-xl p-6">
+                    <div className="animate-pulse">
+                      <div className="h-6 bg-white/10 rounded w-32 mb-4"></div>
+                      <div className="h-48 bg-white/10 rounded"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </main>
+        </div>
+      </ProtectedRoute>
+    )
   }
 
   return (
     <ProtectedRoute>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="min-h-screen bg-black text-white"
-      >
-        <AnimatedBackground particleCount={20} />
+      <div className="min-h-screen bg-black text-white">
+        <AnimatedBackground particleCount={50} />
 
         {/* Header */}
-        <header className="relative z-10 px-6 py-4 border-b border-white/10">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <img src="/icon.png" alt="LookOut" className="w-8 h-8" />
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                LookOut
-              </span>
-            </div>
+        <header className="relative z-10 border-b border-white/10">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <motion.div
+                  className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  LookOut
+                </motion.div>
+                
+                <motion.div
+                  className="text-sm text-gray-400"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  {user?.email}
+                </motion.div>
+              </div>
 
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-400 text-sm">{user?.email}</span>
-              <button
-                onClick={handleRefresh}
-                disabled={loading}
-                className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-                title="Refresh data"
-              >
-                <RefreshCw
-                  className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
-                />
-              </button>
-              <button
-                onClick={handleSettings}
-                className="p-2 text-gray-400 hover:text-white transition-colors"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="p-2 text-gray-400 hover:text-white transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+              <div className="flex items-center space-x-4">
+                <motion.button
+                  onClick={handleRefresh}
+                  className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading || isFetching} // FIXED: Disable when loading or fetching
+                  whileHover={{ scale: loading || isFetching ? 1 : 1.05 }} // FIXED: No hover effect when disabled
+                  whileTap={{ scale: loading || isFetching ? 1 : 0.95 }} // FIXED: No tap effect when disabled
+                  title="Refresh dashboard"
+                >
+                  <RefreshCw className={`w-5 h-5 ${(loading || isFetching) ? 'animate-spin' : ''}`} /> {/* FIXED: Spin when fetching */}
+                </motion.button>
+
+                <motion.button
+                  onClick={handleSettings}
+                  className="p-2 text-gray-400 hover:text-white transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Settings"
+                >
+                  <Settings className="w-5 h-5" />
+                </motion.button>
+
+                <motion.button
+                  onClick={handleSignOut}
+                  className="p-2 text-gray-400 hover:text-white transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Sign out"
+                >
+                  <LogOut className="w-5 h-5" />
+                </motion.button>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="relative z-10 px-6 py-12">
-          <div className="max-w-7xl mx-auto">
-            {/* Welcome Section */}
-            <div className="mb-12">
-              <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                {loading
-                  ? "Loading..."
-                  : dashboardData?.workspaces.length === 0
-                  ? "Welcome to LookOut"
-                  : "Your Dashboard"}
+        <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-8"
+          >
+            {/* Welcome Header */}
+            <div>
+              <h1 className="text-3xl font-bold mb-2">
+                Welcome back! 👋
               </h1>
-              <p className="text-gray-400 text-lg">
-                {loading
-                  ? "Fetching your monitoring data..."
-                  : dashboardData?.workspaces.length === 0
-                  ? "Create your first workspace to start monitoring your projects."
-                  : "Monitor your projects and keep them running smoothly."}
+              <p className="text-gray-400">
+                Monitor your {dashboardData.overview.totalEndpoints} endpoints across {dashboardData.overview.totalWorkspaces} workspace{dashboardData.overview.totalWorkspaces !== 1 ? 's' : ''}
               </p>
             </div>
 
             {/* Overview Stats */}
-            {dashboardData && (
-              <OverviewStatsSection data={dashboardData} loading={loading} />
-            )}
+            <OverviewStatsSection data={dashboardData} loading={false} />
 
-            {/* Charts Section */}
-            {dashboardData && (
-              <ChartsSection data={dashboardData} loading={loading} />
-            )}
+            {/* Charts Section with ALL new data */}
+            <ChartsSection data={dashboardData} loading={false} />
 
-            {/* Workspaces Section - REMOVED onRefresh prop */}
-            {dashboardData && (
-              <WorkspacesSection
-                data={dashboardData}
-                loading={loading}
-              />
-            )}
-          </div>
+            {/* Workspaces Section */}
+            <WorkspacesSection data={dashboardData} loading={false} />
+          </motion.div>
         </main>
-      </motion.div>
+      </div>
     </ProtectedRoute>
   );
 }

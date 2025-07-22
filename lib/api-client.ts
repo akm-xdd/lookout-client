@@ -1,4 +1,3 @@
-// lib/api-client.ts
 import { supabase } from './supabase'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -89,6 +88,10 @@ export const workspaceAPI = {
     return apiCall(`/api/workspaces/${workspaceId}`, {
       method: 'DELETE'
     })
+  },
+
+  async getWorkspaceMonitoring(workspaceId: string) {
+    return apiCall(`/api/workspaces/${workspaceId}/monitoring`)
   }
 }
 
@@ -147,14 +150,12 @@ export const endpointAPI = {
     })
   },
 
-
   // Manually Run Endpoint
    async testEndpoint(workspaceId: string, endpointId: string) {
     return apiCall(`/api/workspaces/${workspaceId}/endpoints/${endpointId}/test`, {
       method: 'POST'
     })
   }
-
 }
 
 // Health check
@@ -166,9 +167,11 @@ export const healthAPI = {
 
 export { APIError }
 
+// UPDATED: Single comprehensive dashboard API
 export const dashboardAPI = {
-  async getDashboard() {
+  // Single endpoint that provides ALL dashboard data
+  async getDashboardStats() {
     return apiCall('/api/dashboard')
   }
-}
 
+}
