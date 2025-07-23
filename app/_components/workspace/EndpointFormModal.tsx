@@ -33,6 +33,7 @@ const HTTP_METHOD_OPTIONS = [
   { value: "OPTIONS", label: "OPTIONS" },
   { value: "PATCH", label: "PATCH" },
 ];
+
 const STATUS_CODE_OPTIONS = [
   { value: 200, label: "200 - OK" },
   { value: 201, label: "201 - Created" },
@@ -77,6 +78,31 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const createEndpoint = useCreateEndpoint(workspaceId);
 
+  // Form validation helper
+  const isFormValid = () => {
+    const nameValid = formData.name.trim().length > 0;
+    const urlValid = formData.url.trim().length > 0 && formData.url.match(/^https?:\/\//);
+    const frequencyValid = formData.frequency_minutes >= 5 && formData.frequency_minutes <= 60;
+    const timeoutValid = formData.timeout_seconds >= 5 && formData.timeout_seconds <= 120;
+    const notAtLimit = currentEndpoints < maxEndpoints;
+    
+    return nameValid && urlValid && frequencyValid && timeoutValid && notAtLimit;
+  };
+
+  // Frequency validation message helper
+  const getFrequencyValidationMessage = () => {
+    if (formData.frequency_minutes === 0) {
+      return "Frequency is required";
+    }
+    if (formData.frequency_minutes < 5) {
+      return "Minimum frequency is 5 minutes";
+    }
+    if (formData.frequency_minutes > 60) {
+      return "Maximum frequency is 60 minutes";
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -92,6 +118,17 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
 
     if (!formData.url.match(/^https?:\/\//)) {
       toast.error("URL must start with http:// or https://");
+      return;
+    }
+
+    // Add frequency validation
+    if (formData.frequency_minutes < 5) {
+      toast.error("Check frequency must be at least 5 minutes");
+      return;
+    }
+
+    if (formData.frequency_minutes > 60) {
+      toast.error("Check frequency cannot exceed 60 minutes");
       return;
     }
 
@@ -273,39 +310,42 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                       onChange={(value) =>
                         setFormData((prev) => ({
                           ...prev,
-                          method: value as string,
+                          method: value,
                         }))
                       }
                       options={HTTP_METHOD_OPTIONS}
                       disabled={createEndpoint.isPending}
-                      placeholder="Select HTTP method"
+                      className="w-full"
+                      renderSelected={(option) => (
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${getMethodColor(
+                            option.value
+                          )}`}
+                        >
+                          {option.label}
+                        </span>
+                      )}
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <div className="relative">
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-300">
-                      Expected Status
-                    </label>
-                    <CustomSelect
-                      value={formData.expected_status}
-                      onChange={(value) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          expected_status: value as number,
-                        }))
-                      }
-                      options={STATUS_CODE_OPTIONS}
-                      disabled={createEndpoint.isPending}
-                      placeholder="Select expected status"
-                      maxHeight="250px"
-                      searchable={true}
-                    />
-                  </div>
-                </div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  Expected Status
+                </label>
+                <CustomSelect
+                  value={formData.expected_status}
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      expected_status: value,
+                    }))
+                  }
+                  options={STATUS_CODE_OPTIONS}
+                  disabled={createEndpoint.isPending}
+                  className="w-full"
+                />
               </div>
             </div>
           </div>
@@ -314,7 +354,8 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors"
+            disabled={createEndpoint.isPending}
+            className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
           >
             <Settings className="w-4 h-4" />
             <span>Advanced Settings</span>
@@ -336,18 +377,41 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                   </label>
                   <input
                     type="number"
-                    value={formData.frequency_minutes}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        frequency_minutes: parseInt(e.target.value),
-                      }))
-                    }
-                    min={1}
+                    value={formData.frequency_minutes === 0 ? '' : formData.frequency_minutes}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        setFormData((prev) => ({
+                          ...prev,
+                          frequency_minutes: 0,
+                        }));
+                      } else {
+                        const parsed = parseInt(value);
+                        if (!isNaN(parsed)) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            frequency_minutes: parsed,
+                          }));
+                        }
+                      }
+                    }}
+                    min={5}
                     max={60}
                     disabled={createEndpoint.isPending}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white disabled:opacity-50"
+                    className={`w-full px-4 py-3 bg-white/5 border rounded-lg focus:outline-none focus:ring-1 text-white disabled:opacity-50 ${
+                      formData.frequency_minutes >= 5 && formData.frequency_minutes <= 60
+                        ? 'border-white/10 focus:border-blue-500 focus:ring-blue-500'
+                        : 'border-red-500/50 focus:border-red-500 focus:ring-red-500'
+                    }`}
                   />
+                  {getFrequencyValidationMessage() && (
+                    <p className="mt-1 text-sm text-red-400">
+                      {getFrequencyValidationMessage()}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Must be between 5-60 minutes
+                  </p>
                 </div>
 
                 <div>
@@ -356,13 +420,24 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                   </label>
                   <input
                     type="number"
-                    value={formData.timeout_seconds}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        timeout_seconds: parseInt(e.target.value),
-                      }))
-                    }
+                    value={formData.timeout_seconds === 0 ? '' : formData.timeout_seconds}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        setFormData((prev) => ({
+                          ...prev,
+                          timeout_seconds: 0,
+                        }));
+                      } else {
+                        const parsed = parseInt(value);
+                        if (!isNaN(parsed)) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            timeout_seconds: parsed,
+                          }));
+                        }
+                      }
+                    }}
                     min={5}
                     max={120}
                     disabled={createEndpoint.isPending}
@@ -371,78 +446,83 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                 </div>
               </div>
 
-              {/* Request Headers */}
+              {/* Headers */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-300">
-                  Request Headers
+                  Headers (Optional)
                 </label>
-
-                {/* Add Header Input */}
-                <div className="flex space-x-2 mb-3">
-                  <input
-                    type="text"
-                    value={headerInput.key}
-                    onChange={(e) =>
-                      setHeaderInput((prev) => ({
-                        ...prev,
-                        key: e.target.value,
-                      }))
-                    }
-                    placeholder="Header name"
-                    disabled={createEndpoint.isPending}
-                    className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 disabled:opacity-50"
-                  />
-                  <input
-                    type="text"
-                    value={headerInput.value}
-                    onChange={(e) =>
-                      setHeaderInput((prev) => ({
-                        ...prev,
-                        value: e.target.value,
-                      }))
-                    }
-                    placeholder="Header value"
-                    disabled={createEndpoint.isPending}
-                    className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 disabled:opacity-50"
-                  />
-                  <button
-                    type="button"
-                    onClick={addHeader}
-                    disabled={
-                      createEndpoint.isPending ||
-                      !headerInput.key ||
-                      !headerInput.value
-                    }
-                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Add
-                  </button>
-                </div>
-
-                {/* Header List */}
-                {Object.entries(formData.headers).length > 0 && (
-                  <div className="space-y-2">
-                    {Object.entries(formData.headers).map(([key, value]) => (
-                      <div
-                        key={key}
-                        className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
+                <div className="space-y-2">
+                  {/* Add Header Form */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={headerInput.key}
+                      onChange={(e) =>
+                        setHeaderInput((prev) => ({
+                          ...prev,
+                          key: e.target.value,
+                        }))
+                      }
+                      placeholder="Header name"
+                      disabled={createEndpoint.isPending}
+                      className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 text-sm disabled:opacity-50"
+                    />
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={headerInput.value}
+                        onChange={(e) =>
+                          setHeaderInput((prev) => ({
+                            ...prev,
+                            value: e.target.value,
+                          }))
+                        }
+                        placeholder="Header value"
+                        disabled={createEndpoint.isPending}
+                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 text-sm disabled:opacity-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={addHeader}
+                        disabled={
+                          createEndpoint.isPending ||
+                          !headerInput.key ||
+                          !headerInput.value
+                        }
+                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        <div className="flex-1">
-                          <span className="font-medium text-white">{key}:</span>
-                          <span className="text-gray-300 ml-2">{value}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeHeader(key)}
-                          disabled={createEndpoint.isPending}
-                          className="p-1 text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                        Add
+                      </button>
+                    </div>
                   </div>
-                )}
+
+                  {/* Header List */}
+                  {Object.entries(formData.headers).length > 0 && (
+                    <div className="space-y-2">
+                      {Object.entries(formData.headers).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="break-words">
+                              <span className="font-medium text-white">{key}:</span>
+                              <span className="text-gray-300 ml-2 break-all">{value}</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeHeader(key)}
+                            disabled={createEndpoint.isPending}
+                            className="p-1 text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Request Body */}
@@ -491,9 +571,7 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                 type="submit"
                 disabled={
                   createEndpoint.isPending ||
-                  !formData.name.trim() ||
-                  !formData.url.trim() ||
-                  currentEndpoints >= maxEndpoints
+                  !isFormValid()
                 }
                 className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >

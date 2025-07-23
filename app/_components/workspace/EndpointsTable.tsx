@@ -221,12 +221,15 @@ const handleTestEndpoint = async (endpoint: RawEndpoint) => {
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-white">Endpoints</h2>
-            <button
-              onClick={onAddEndpoint}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-            >
-              Add Endpoint
-            </button>
+           {/* hide the add endpoint button if there are already 7 endpoints */}
+            {endpoints.length < 7 && (
+              <button
+                onClick={onAddEndpoint}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Add Endpoint
+              </button>
+            )}
           </div>
           <p className="text-gray-400 text-sm mt-1">
             {endpoints.length} endpoint{endpoints.length !== 1 ? "s" : ""}{" "}

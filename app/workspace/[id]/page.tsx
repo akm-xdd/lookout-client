@@ -225,7 +225,6 @@ export default function WorkspaceDetailPage() {
                 endpointStats={monitoringChartsData}
                 healthStats={healthSummaryData}
                 recentIncidents={workspaceStats.recent_incidents} // ADD THIS
-                // timeSeriesData={[]} // TODO: Implement time series from backend
               />
             </div>
           </motion.div>

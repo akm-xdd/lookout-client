@@ -60,7 +60,7 @@ const OverviewStatsSection: React.FC<OverviewStatsSectionProps> = ({
       <OverviewStatCard
         title="Total Endpoints"
         value={`${stats.totalEndpoints}/${data.user?.maxEndpoints ?? 35}`}
-        subtitle={stats.totalEndpoints === 0 ? 'No monitoring yet' : 'Being monitored'}
+        subtitle={stats.totalEndpoints === 0 ? 'No monitoring yet' : 'Configured endpoints'}
         icon={Globe}
         color="purple"
         progress={{

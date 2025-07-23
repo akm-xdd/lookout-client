@@ -31,7 +31,6 @@ const HomePage: React.FC = () => {
   };
 
   const handleViewSourceClick = () => {
-    // TODO: Open GitHub repository
     window.open('https://github.com/akm-xdd/lookout-client', '_blank');
   };
 

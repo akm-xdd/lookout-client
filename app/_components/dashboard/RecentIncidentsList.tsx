@@ -119,15 +119,6 @@ const RecentIncidentsList: React.FC<RecentIncidentsListProps> = ({
           </div>
         ))}
       </div>
-      
-      {/* View All Link */}
-      {recentIncidents.length > 5 && (
-        <div className="mt-4 pt-4 border-t border-white/10">
-          <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-            View all {recentIncidents.length} incidents →
-          </button>
-        </div>
-      )}
     </div>
   )
 }

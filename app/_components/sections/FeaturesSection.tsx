@@ -27,7 +27,7 @@ const defaultFeatures: Feature[] = [
   {
     icon: <Bell className="w-6 h-6" />,
     title: "Smart Alerts",
-    description: "Get notified via email, Slack, Discord, or custom webhooks"
+    description: "Get notified via email, Slack or custom webhooks"
   },
   {
     icon: <Zap className="w-6 h-6" />,

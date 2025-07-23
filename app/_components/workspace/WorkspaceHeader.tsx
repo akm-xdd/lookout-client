@@ -217,6 +217,7 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           <button
             onClick={handleAddEndpoint}
             className="flex items-center space-x-2 p-2 bg-green-500/20 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-all"
+            disabled={endpointCount >= maxEndpoints}
           >
             <Plus className="w-4 h-4" />
             <span className="text-sm">Add Endpoint</span>

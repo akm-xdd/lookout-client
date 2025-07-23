@@ -9,8 +9,11 @@ export const useCreateEndpoint = (workspaceId: string) => {
     mutationFn: (data: any) => endpointAPI.createEndpoint(workspaceId, data),
     onSuccess: () => {
       // Invalidate workspace endpoints and dashboard
-      queryClient.invalidateQueries({ queryKey: queryKeys.workspaceEndpoints(workspaceId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
+      queryClient.invalidateQueries({ queryKey: ['workspace-stats', workspaceId]  })
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceId, 'endpoints'] })
+      queryClient.invalidateQueries({ 
+        queryKey: ['dashboard'] 
+      })
     },
   })
 }
@@ -41,8 +44,9 @@ export const useDeleteEndpoint = (workspaceId: string) => {
     },
     onSettled: () => {
       // Always refetch to ensure consistency
-      queryClient.invalidateQueries({ queryKey: queryKeys.workspaceEndpoints(workspaceId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
+      queryClient.invalidateQueries({ queryKey: ['workspace-stats', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceId, 'endpoints'] })
     },
   })
 }
@@ -68,32 +72,33 @@ export const useUpdateEndpoint = (workspaceId: string) => {
     }) => endpointAPI.updateEndpoint(workspaceId, endpointId, data),
     onSuccess: () => {
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.workspaceEndpoints(workspaceId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
+      queryClient.invalidateQueries({ queryKey: ['workspace-stats', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceId, 'endpoints'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     }
   })
 }
 
 // Toggle endpoint active status (specific use case)
-export const useToggleEndpoint = (workspaceId: string) => {
-  const updateEndpoint = useUpdateEndpoint(workspaceId)
+export function useToggleEndpoint(workspaceId: string) {
+  const queryClient = useQueryClient()
   
-  return {
-    ...updateEndpoint,
-    mutateAsync: async ({ endpointId, isActive }: { endpointId: string; isActive: boolean }) => {
-      return updateEndpoint.mutateAsync({
-        endpointId,
-        data: { is_active: isActive }
+  return useMutation({
+    mutationFn: ({ endpointId, isActive }: { endpointId: string, isActive: boolean }) => 
+      endpointAPI.updateEndpoint(workspaceId, endpointId, { is_active: isActive }),
+    onSuccess: () => {
+      // CRITICAL FIX: Invalidate workspace stats query (correct key!)
+      queryClient.invalidateQueries({ 
+        queryKey: ['workspace-stats', workspaceId] 
       })
-    },
-    mutate: ({ endpointId, isActive }: { endpointId: string; isActive: boolean }) => {
-      updateEndpoint.mutate({
-        endpointId,
-        data: { is_active: isActive }
+      
+      // Also invalidate endpoints list if it exists
+      queryClient.invalidateQueries({ 
+        queryKey: ['workspace', workspaceId, 'endpoints'] 
       })
     }
-  }
-}
+  })
+    }
 
 export function useTestEndpoint(workspaceId: string) {
   return useMutation({
