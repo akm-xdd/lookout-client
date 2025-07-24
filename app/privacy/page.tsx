@@ -13,24 +13,23 @@ import {
   Lock,
 } from "lucide-react";
 
+// Layout Components
+import Navbar from '@/app/_components/layout/Navbar'
+import Footer from '@/app/_components/layout/Footer'
+import AnimatedBackground from '@/app/_components/layout/AnimatedBackground'
+
 const PrivacyPolicyPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="border-b border-gray-800">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center text-gray-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Link>
-        </div>
-      </div>
+      <AnimatedBackground particleCount={30} />
+      
+      <Navbar 
+        onLoginClick={() => window.location.href = '/login'}
+        onGetStartedClick={() => window.location.href = '/register'}
+      />
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -54,25 +53,26 @@ const PrivacyPolicyPage: React.FC = () => {
                   <Eye className="w-6 h-6 mr-3 text-blue-400" />
                   Introduction
                 </h2>
-                <p className="text-gray-300 leading-relaxed">
-                  LookOut ("we," "our," or "us") is committed to protecting your
-                  privacy. This Privacy Policy explains how we collect, use,
-                  disclose, and safeguard your information when you use our
-                  uptime monitoring service. By using LookOut, you agree to the
-                  collection and use of information in accordance with this
-                  policy. Please beware that this policy may change over time,
-                  and we will notify you of any significant changes by posting
-                  the new policy on this page with an updated "Last updated"
-                  date. Additionally, we encourage you to review this Privacy
-                  Policy periodically for any changes. If you do not agree with
-                  the terms of this Privacy Policy, please do not access the
-                  site.
-                </p>
-                <br />
-                <p className="text-gray-300 leading-relaxed">
-                We do not knowingly track or collect any personal information entered on our website. Any information you enter on the website for monitoring purposes is used solely for the functionality of the service and is not stored or processed for any other purpose. It is however advised to avoid entering sensitive personal information on the site, such as passwords, authentication tokens, or any other sensitive data that could compromise your security or privacy. You will be solely responsible for the information you provide, and we will not be liable for any issues arising from the use of such information. If you have any concerns about privacy or data security, please contact us before using the service.
-
-                </p>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
+                  <p className="text-gray-300 leading-relaxed">
+                    LookOut ("we," "our," or "us") is committed to protecting your
+                    privacy. This Privacy Policy explains how we collect, use,
+                    disclose, and safeguard your information when you use our
+                    uptime monitoring service. By using LookOut, you agree to the
+                    collection and use of information in accordance with this
+                    policy. Please beware that this policy may change over time,
+                    and we will notify you of any significant changes by posting
+                    the new policy on this page with an updated "Last updated"
+                    date. Additionally, we encourage you to review this Privacy
+                    Policy periodically for any changes. If you do not agree with
+                    the terms of this Privacy Policy, please do not access the
+                    site.
+                  </p>
+                  <br />
+                  <p className="text-gray-300 leading-relaxed">
+                    We do not knowingly track or collect any personal information entered on our website. Any information you enter on the website for monitoring purposes is used solely for the functionality of the service and is not stored or processed for any other purpose. It is however advised to avoid entering sensitive personal information on the site, such as passwords, authentication tokens, or any other sensitive data that could compromise your security or privacy. You will be solely responsible for the information you provide, and we will not be liable for any issues arising from the use of such information. If you have any concerns about privacy or data security, please contact us before using the service.
+                  </p>
+                </div>
               </section>
 
               {/* Information We Collect */}
@@ -81,50 +81,52 @@ const PrivacyPolicyPage: React.FC = () => {
                   <Database className="w-6 h-6 mr-3 text-blue-400" />
                   Information We Collect
                 </h2>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-xl font-medium mb-2 text-white">
-                      Personal Information
-                    </h3>
-                    <ul className="list-disc list-inside text-gray-300 space-y-2">
-                      <li>
-                        Email address (for account creation and notifications)
-                      </li>
-                      <li>Password (securely hashed using bcrypt)</li>
-                      <li>Account creation and last login timestamps</li>
-                    </ul>
-                  </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-xl font-medium mb-2 text-white">
+                        Personal Information
+                      </h3>
+                      <ul className="list-disc list-inside text-gray-300 space-y-2">
+                        <li>
+                          Email address (for account creation and notifications)
+                        </li>
+                        <li>Password (securely hashed using bcrypt)</li>
+                        <li>Account creation and last login timestamps</li>
+                      </ul>
+                    </div>
 
-                  <div>
-                    <h3 className="text-xl font-medium mb-2 text-white">
-                      Service Data
-                    </h3>
-                    <ul className="list-disc list-inside text-gray-300 space-y-2">
-                      <li>Workspace names and descriptions you create</li>
-                      <li>Endpoint URLs and monitoring configurations</li>
-                      <li>
-                        HTTP headers and request bodies for endpoints you
-                        configure
-                      </li>
-                      <li>
-                        Monitoring results including response times and status
-                        codes
-                      </li>
-                      <li>Notification preferences (email, webhook URLs)</li>
-                    </ul>
-                  </div>
+                    <div>
+                      <h3 className="text-xl font-medium mb-2 text-white">
+                        Service Data
+                      </h3>
+                      <ul className="list-disc list-inside text-gray-300 space-y-2">
+                        <li>Workspace names and descriptions you create</li>
+                        <li>Endpoint URLs and monitoring configurations</li>
+                        <li>
+                          HTTP headers and request bodies for endpoints you
+                          configure
+                        </li>
+                        <li>
+                          Monitoring results including response times and status
+                          codes
+                        </li>
+                        <li>Notification preferences (email, webhook URLs)</li>
+                      </ul>
+                    </div>
 
-                  <div>
-                    <h3 className="text-xl font-medium mb-2 text-white">
-                      Technical Information
-                    </h3>
-                    <ul className="list-disc list-inside text-gray-300 space-y-2">
-                      <li>
-                        IP addresses for security and authentication purposes
-                      </li>
-                      <li>Browser type and version (via user agent)</li>
-                      <li>Device information for responsive design</li>
-                    </ul>
+                    <div>
+                      <h3 className="text-xl font-medium mb-2 text-white">
+                        Technical Information
+                      </h3>
+                      <ul className="list-disc list-inside text-gray-300 space-y-2">
+                        <li>
+                          IP addresses for security and authentication purposes
+                        </li>
+                        <li>Browser type and version (via user agent)</li>
+                        <li>Device information for responsive design</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </section>

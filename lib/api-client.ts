@@ -219,4 +219,13 @@ export const dashboardAPI = {
   }
 }
 
+export const userAPI = {
+  async deleteAccount(data: { email: string; password?: string; confirmText?: string }) {
+    return apiCall('/api/user/account', {
+      method: 'DELETE',
+      body: JSON.stringify(data)
+    })
+  }
+}
+
 export { APIError }

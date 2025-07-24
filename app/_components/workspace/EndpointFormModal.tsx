@@ -9,11 +9,12 @@ import {
   Code,
   Timer,
   AlertCircle,
+  AlertTriangle, // Add this import
 } from "lucide-react";
 import { toast } from "sonner";
 import { endpointAPI, APIError } from "@/lib/api-client";
 import { useCreateEndpoint } from "@/hooks/useEndpoints";
-import CustomSelect from "../ui/CustomSelect";
+import CustomSelect from "../UI/CustomSelect";
 
 interface EndpointFormModalProps {
   isOpen: boolean;
@@ -78,15 +79,54 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const createEndpoint = useCreateEndpoint(workspaceId);
 
+  // NEW: Check if URL is localhost
+  const isLocalhostUrl = (url: string): boolean => {
+    if (!url) return false;
+    const lowerUrl = url.toLowerCase();
+    return (
+      lowerUrl.includes("localhost") ||
+      lowerUrl.includes("127.0.0.1") ||
+      lowerUrl.includes("0.0.0.0") ||
+      lowerUrl.match(/https?:\/\/192\.168\./)
+    );
+  };
+
+  // NEW: Get environment-aware warning message
+  const getLocalhostWarning = () => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    // const isDevelopment = false;
+
+    if (isDevelopment) {
+      return {
+        title: "Localhost URL Warning",
+        message:
+          "This localhost URL only exists on your local machine. The monitoring system won't be able to reach it and all checks will fail. This warning is only shown in development mode.",
+        severity: "warning",
+      } as const;
+    } else {
+      return {
+        title: "Invalid Monitoring Target",
+        message:
+          "Localhost URLs cannot be monitored by this system. The monitoring server cannot access URLs that only exist on your local machine. Please use a publicly accessible URL instead.",
+        severity: "error",
+      } as const;
+    }
+  };
+
   // Form validation helper
   const isFormValid = () => {
     const nameValid = formData.name.trim().length > 0;
-    const urlValid = formData.url.trim().length > 0 && formData.url.match(/^https?:\/\//);
-    const frequencyValid = formData.frequency_minutes >= 5 && formData.frequency_minutes <= 60;
-    const timeoutValid = formData.timeout_seconds >= 5 && formData.timeout_seconds <= 120;
+    const urlValid =
+      formData.url.trim().length > 0 && formData.url.match(/^https?:\/\//);
+    const frequencyValid =
+      formData.frequency_minutes >= 5 && formData.frequency_minutes <= 60;
+    const timeoutValid =
+      formData.timeout_seconds >= 5 && formData.timeout_seconds <= 120;
     const notAtLimit = currentEndpoints < maxEndpoints;
-    
-    return nameValid && urlValid && frequencyValid && timeoutValid && notAtLimit;
+
+    return (
+      nameValid && urlValid && frequencyValid && timeoutValid && notAtLimit
+    );
   };
 
   // Frequency validation message helper
@@ -231,6 +271,10 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
 
   if (!isOpen) return null;
 
+  // NEW: Get localhost warning info
+  const showLocalhostWarning = isLocalhostUrl(formData.url);
+  const localhostWarning = showLocalhostWarning ? getLocalhostWarning() : null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
@@ -296,6 +340,40 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                 disabled={createEndpoint.isPending}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400 disabled:opacity-50"
               />
+
+              {/* NEW: Localhost Warning */}
+              {localhostWarning && (
+                <div
+                  className={`mt-3 p-3 rounded-lg border flex items-start space-x-3 ${
+                    localhostWarning.severity === "error"
+                      ? "bg-red-500/10 border-red-500/30 text-red-200"
+                      : "bg-yellow-500/10 border-yellow-500/30 text-yellow-200"
+                  }`}
+                >
+                  <AlertTriangle
+                    className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
+                      localhostWarning.severity === "error"
+                        ? "text-red-400"
+                        : "text-yellow-400"
+                    }`}
+                  />
+                  <div>
+                    <p className="font-medium text-sm">
+                      {localhostWarning.title}
+                    </p>
+                    <p className="text-sm mt-1 opacity-90">
+                      {localhostWarning.message}
+                    </p>
+                    {process.env.NODE_ENV === "development" && (
+                      <p className="text-xs mt-2 opacity-75">
+                        💡 Try using{" "}
+                        <code className="bg-white/10 px-1 rounded">ngrok</code>{" "}
+                        or your actual domain for testing
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -377,10 +455,14 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                   </label>
                   <input
                     type="number"
-                    value={formData.frequency_minutes === 0 ? '' : formData.frequency_minutes}
+                    value={
+                      formData.frequency_minutes === 0
+                        ? ""
+                        : formData.frequency_minutes
+                    }
                     onChange={(e) => {
                       const value = e.target.value;
-                      if (value === '') {
+                      if (value === "") {
                         setFormData((prev) => ({
                           ...prev,
                           frequency_minutes: 0,
@@ -399,9 +481,10 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                     max={60}
                     disabled={createEndpoint.isPending}
                     className={`w-full px-4 py-3 bg-white/5 border rounded-lg focus:outline-none focus:ring-1 text-white disabled:opacity-50 ${
-                      formData.frequency_minutes >= 5 && formData.frequency_minutes <= 60
-                        ? 'border-white/10 focus:border-blue-500 focus:ring-blue-500'
-                        : 'border-red-500/50 focus:border-red-500 focus:ring-red-500'
+                      formData.frequency_minutes >= 5 &&
+                      formData.frequency_minutes <= 60
+                        ? "border-white/10 focus:border-blue-500 focus:ring-blue-500"
+                        : "border-red-500/50 focus:border-red-500 focus:ring-red-500"
                     }`}
                   />
                   {getFrequencyValidationMessage() && (
@@ -420,10 +503,14 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                   </label>
                   <input
                     type="number"
-                    value={formData.timeout_seconds === 0 ? '' : formData.timeout_seconds}
+                    value={
+                      formData.timeout_seconds === 0
+                        ? ""
+                        : formData.timeout_seconds
+                    }
                     onChange={(e) => {
                       const value = e.target.value;
-                      if (value === '') {
+                      if (value === "") {
                         setFormData((prev) => ({
                           ...prev,
                           timeout_seconds: 0,
@@ -506,8 +593,12 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                         >
                           <div className="flex-1 min-w-0">
                             <div className="break-words">
-                              <span className="font-medium text-white">{key}:</span>
-                              <span className="text-gray-300 ml-2 break-all">{value}</span>
+                              <span className="font-medium text-white">
+                                {key}:
+                              </span>
+                              <span className="text-gray-300 ml-2 break-all">
+                                {value}
+                              </span>
                             </div>
                           </div>
                           <button
@@ -569,10 +660,7 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={
-                  createEndpoint.isPending ||
-                  !isFormValid()
-                }
+                disabled={createEndpoint.isPending || !isFormValid()}
                 className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createEndpoint.isPending ? (

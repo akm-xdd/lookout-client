@@ -31,7 +31,7 @@ const Footer: React.FC<FooterProps> = ({
                 Privacy
               </Link>
               <span className="hidden sm:inline">•</span>
-              <Link href="/terms" className="hover:text-white transition-colors">
+              <Link href="/tos" className="hover:text-white transition-colors">
                 Terms
               </Link>
               <span className="hidden sm:inline">•</span>
@@ -98,13 +98,8 @@ const Footer: React.FC<FooterProps> = ({
             <h3 className="text-white font-semibold mb-4">Product</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/features" className="text-gray-400 hover:text-white transition-colors text-sm">
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors text-sm">
-                  Pricing
+                <Link href="/about" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  About
                 </Link>
               </li>
               <li>
@@ -136,13 +131,8 @@ const Footer: React.FC<FooterProps> = ({
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">
+                <Link href="/tos" className="text-gray-400 hover:text-white transition-colors text-sm">
                   Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/cookies" className="text-gray-400 hover:text-white transition-colors text-sm">
-                  Cookie Policy
                 </Link>
               </li>
               <li>
