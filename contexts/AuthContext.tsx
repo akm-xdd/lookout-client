@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  initialized: boolean; // Add this to the interface
   signOut: () => Promise<void>;
 }
 
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  initialized: false, // Add default value
   signOut: async () => {},
 });
 
@@ -77,39 +79,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     getInitialSession();
   }, []);
 
-  // Handle routing after initialization
+  // Handle routing after initialization - FIXED VERSION
   useEffect(() => {
-    if (!initialized || loading) return;
+    // Only run routing logic after initialization is complete
+    if (!initialized) return;
 
-    const handleRouting = () => {
-      if (session && user) {
-        // User is authenticated
-        if (pathname === "/login" || pathname === "/register") {
-          console.log(
-            "Authenticated user on auth page, redirecting to dashboard"
-          );
-          router.push("/dashboard");
-        }
-        // Allow access to auth callback during OAuth flow
-        else if (pathname === "/auth/callback") {
-          console.log("Processing auth callback...");
-          // Let the callback page handle the redirect
-        }
-      } else {
-        // User is not authenticated
-        if (!isPublicRoute) {
-          console.log(
-            "Unauthenticated user on protected route, redirecting to login"
-          );
-          router.push("/login");
-        }
+    // Check if we need to redirect
+    if (session && user) {
+      // User is authenticated
+      if (pathname === "/login" || pathname === "/register") {
+        console.log(
+          "Authenticated user on auth page, redirecting to dashboard"
+        );
+        router.push("/dashboard");
       }
-    };
-
-    // Small delay to prevent race conditions
-    const timer = setTimeout(handleRouting, 100);
-    return () => clearTimeout(timer);
-  }, [session, user, pathname, initialized, loading, isPublicRoute, router]);
+    } else {
+      // User is not authenticated
+      if (!isPublicRoute && pathname !== "/auth/callback") {
+        console.log(
+          "Unauthenticated user on protected route, redirecting to login"
+        );
+        router.push("/login");
+      }
+    }
+  }, [session, user, pathname, initialized, isPublicRoute, router]);
 
   useEffect(() => {
     const {
@@ -120,8 +113,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Just handle routing - NO TOASTS
       if (event === "SIGNED_IN") {
-        // Only redirect if user is on login/register pages or homepage
-        const authPages = ["/login", "/register", "/", "/auth/callback"];
+        // Only redirect if user is on login/register pages
+        const authPages = ["/login", "/register",  "/auth/callback"];
         if (authPages.includes(pathname)) {
           console.log("Redirecting to dashboard from auth page");
           router.push("/dashboard");
@@ -167,6 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     session,
     loading,
+    initialized, // Include initialized in context
     signOut,
   };
 

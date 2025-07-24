@@ -1,3 +1,4 @@
+// app/_components/layout/Navbar.tsx
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -10,7 +11,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onGetStartedClick }) => {
-  const { session, user, signOut, loading } = useAuth();
+  const { session, user, signOut, loading, initialized } = useAuth();
   const router = useRouter();
 
   const handleGetStartedClick = () => {
@@ -38,6 +39,9 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onGetStartedClick }) => {
     // AuthContext will handle the redirect
   };
 
+  // Show loading state during initialization
+  const isLoading = !initialized || loading;
+
   return (
     <nav className="relative z-10 px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -49,7 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onGetStartedClick }) => {
         </Link>
         
         <div className="flex items-center space-x-4">
-          {loading ? (
+          {isLoading ? (
             // Show loading state
             <div className="w-8 h-8 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
           ) : session ? (

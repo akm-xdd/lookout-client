@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import Navbar from '@/app/_components/layout/Navbar'
 import Footer from '@/app/_components/layout/Footer'
 import AnimatedBackground from '@/app/_components/layout/AnimatedBackground'
-import AuthGuard from '@/app/auth/AuthGuard' // ADD THIS
+import AuthGuard from '@/app/auth/AuthGuard'
 
 // Auth helpers
 import { authHelpers } from '@/lib/supabase'
@@ -86,7 +86,7 @@ export default function RegisterPage() {
         })
         setLoading(false)
       } else {
-        toast.loading('Redirecting to GitHub...', {
+        toast.loading('This may take a second...Or several.', {
           duration: 2000,
         })
         // OAuth redirect will happen automatically
@@ -101,7 +101,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthGuard requireAuth={false}> {/* ADD THIS - block if logged in */}
+    <AuthGuard requireAuth={false}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -151,13 +151,13 @@ export default function RegisterPage() {
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
                     placeholder="Enter your email"
                   />
                 </div>
@@ -168,14 +168,14 @@ export default function RegisterPage() {
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
                     placeholder="Create a password"
                   />
                 </div>
@@ -186,14 +186,14 @@ export default function RegisterPage() {
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-gray-400"
                     placeholder="Confirm your password"
                   />
                 </div>
@@ -223,7 +223,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <Footer />
       </motion.div>
     </AuthGuard>
   )

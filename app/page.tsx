@@ -4,7 +4,6 @@ import { motion } from 'motion/react';
 
 // Layout Components
 import Navbar from './_components/layout/Navbar';
-import Footer from './_components/layout/Footer';
 import AnimatedBackground from './_components/layout/AnimatedBackground';
 
 // Section Components
@@ -68,9 +67,6 @@ const HomePage: React.FC = () => {
         onSecondaryClick={handleViewSourceClick}
         
       />
-
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };

@@ -1,7 +1,8 @@
 // components/auth/ProtectedRoute.tsx
 'use client'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -21,17 +22,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   fallback = <LoadingSpinner /> 
 }) => {
-  const { session, loading } = useAuth()
+  const { session, loading, initialized } = useAuth()
+  const router = useRouter()
 
-  if (loading) {
+  useEffect(() => {
+    // Only redirect after initialization is complete and we know there's no session
+    if (initialized && !loading && !session) {
+      router.push('/login')
+    }
+  }, [initialized, loading, session, router])
+
+  // Show loading state while initializing or loading
+  if (!initialized || loading) {
     return <>{fallback}</>
   }
 
+  // Show loading state while redirecting
   if (!session) {
-    // The AuthContext will handle redirecting to login
     return <>{fallback}</>
   }
 
+  // User is authenticated, show content
   return <>{children}</>
 }
 
