@@ -1,6 +1,5 @@
 "use client"
 import React from 'react';
-import { motion } from 'motion/react';
 
 // Layout Components
 import Navbar from './_components/layout/Navbar';
@@ -13,7 +12,6 @@ import FeaturesSection from './_components/sections/FeaturesSection';
 import DashboardPreview from './_components/sections/DashboardPreview';
 import CTASection from './_components/sections/CTASection';
 
-import {toast} from 'sonner';
 
 const HomePage: React.FC = () => {
   // Navigation handlers

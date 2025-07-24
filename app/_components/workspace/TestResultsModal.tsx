@@ -5,8 +5,6 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  Zap,
-  Globe,
   Calendar,
 } from "lucide-react";
 import { toast } from "sonner";

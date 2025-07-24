@@ -13,7 +13,7 @@ import {
   AlertCircle,
   HelpCircle
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, ResponsiveContainer } from 'recharts';
 
 // Types for our new metrics
 interface HealthScoreMetric {

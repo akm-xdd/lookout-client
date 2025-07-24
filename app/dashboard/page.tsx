@@ -88,7 +88,7 @@ function generatePDFReport(data: DashboardData, filename: string) {
 
     // Workspaces Detail
     if (data.workspaces && data.workspaces.length > 0) {
-      let yPosition = (doc as any).lastAutoTable?.finalY + 20 || 150;
+      const yPosition = (doc as any).lastAutoTable?.finalY + 20 || 150;
       doc.setFontSize(16);
       doc.text("Workspaces", 20, yPosition);
 
@@ -111,7 +111,7 @@ function generatePDFReport(data: DashboardData, filename: string) {
 
     // Recent Incidents
     if (data.recentIncidents && data.recentIncidents.length > 0) {
-      let yPosition = (doc as any).lastAutoTable?.finalY + 20 || 200;
+      const yPosition = (doc as any).lastAutoTable?.finalY + 20 || 200;
       doc.setFontSize(16);
       doc.text("Recent Incidents", 20, yPosition);
 

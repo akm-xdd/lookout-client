@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { X, Trash2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
-import { endpointAPI, APIError } from '@/lib/api-client'
 import { useDeleteEndpoint } from '@/hooks/useEndpoints'
 
 interface DeleteEndpointModalProps {

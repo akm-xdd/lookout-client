@@ -1,6 +1,4 @@
 import React from "react";
-import { formatUptime, formatResponseTime } from "@/lib/data-loader";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { HealthSummaryStats } from '@/lib/workspace-transformers';
 import { WorkspaceStatsIncident } from '@/hooks/useWorkspaceStats';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Github, Code2 } from 'lucide-react';
+import { ArrowRight, Github } from 'lucide-react';
 
 interface HeroSectionProps {
   onStartMonitoringClick?: () => void;

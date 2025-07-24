@@ -18,8 +18,6 @@ import {
   Copy, 
   ExternalLink,
   Heart,
-  User,
-  Settings,
   HelpCircle,
   Zap,
   Coffee
@@ -28,7 +26,6 @@ import Link from 'next/link'
 
 // Layout Components
 import Navbar from '@/app/_components/layout/Navbar'
-import Footer from '@/app/_components/layout/Footer'
 import AnimatedBackground from '@/app/_components/layout/AnimatedBackground'
 
 const SupportPage: React.FC = () => {

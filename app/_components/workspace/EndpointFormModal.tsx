@@ -6,13 +6,10 @@ import {
   ChevronDown,
   Globe,
   Settings,
-  Code,
-  Timer,
   AlertCircle,
   AlertTriangle, // Add this import
 } from "lucide-react";
 import { toast } from "sonner";
-import { endpointAPI, APIError } from "@/lib/api-client";
 import { useCreateEndpoint } from "@/hooks/useEndpoints";
 import CustomSelect from "../UI/CustomSelect";
 

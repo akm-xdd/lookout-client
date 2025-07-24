@@ -1,6 +1,6 @@
 // components/workspace/WorkspaceHeader.tsx - ENHANCED WITH EDIT/DELETE
 import React, { useState, useRef, useEffect } from 'react'
-import { ArrowLeft, Settings, Plus, Play, MoreVertical, RefreshCw, Edit, Trash2 } from 'lucide-react'
+import { ArrowLeft, Settings, Plus, RefreshCw, Edit, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { formatLastCheck, formatCreatedAt, formatUptime, formatResponseTime } from '@/lib/data-loader'

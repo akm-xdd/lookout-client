@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MoreVertical, Clock, AlertCircle, Edit, Trash2 } from "lucide-react";
-import { toast } from 'sonner'
 import {
   WorkspaceData,
   formatUptime,

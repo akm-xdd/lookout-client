@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import {
-  ExternalLink,
   Play,
   Trash2,
   Eye,
-  Clock,
   AlertCircle,
   CheckCircle,
   ToggleLeft,
