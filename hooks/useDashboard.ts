@@ -105,7 +105,7 @@ function transformDashboardData(backendData: any): any {
       activeIncidents: workspace.active_incidents || 0,
       // Legacy fields for compatibility
       createdAt: workspace.created_at,
-      maxEndpoints: 7 // From constants
+      maxTotalEndpoints: 7 // From constants
     }
   })
 
@@ -126,7 +126,7 @@ function transformDashboardData(backendData: any): any {
       },
       // Add legacy fields for compatibility
       maxWorkspaces: backendData.user.limits.max_workspaces,
-      maxEndpoints: backendData.user.limits.max_total_endpoints
+      maxTotalEndpoints: backendData.user.limits.max_total_endpoints
     },
     workspaces: transformedWorkspaces,
     overview: {

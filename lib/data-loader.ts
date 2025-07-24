@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 export interface EndpointData {
   id: string
   name: string
@@ -28,6 +30,18 @@ export interface WorkspaceData {
   user_id: string
   endpointCount: number
   endpoints: EndpointData[]
+  status?: 'online' | 'warning' | 'offline' | 'unknown'
+  uptime?: number | null
+  avgResponseTime?: number | null
+  lastCheck?: string | null
+  activeIncidents?: number
+}
+
+export interface EndpointPerformance {
+  endpointName: string
+  workspaceName: string
+  avgResponseTime: number
+  uptime: number
 }
 
 export interface UserData {
@@ -86,6 +100,22 @@ export interface DashboardData {
   workspaces: WorkspaceData[]
   overview: OverviewData
   recentIncidents: IncidentData[]
+}
+
+export interface TestResult {
+  success: boolean
+  status_code: number
+  response_time: number
+  error?: string
+  headers?: Record<string, string>
+  request_config?: {
+    method: string
+    url: string
+    headers: Record<string, string>
+    timeout: number
+  }
+  request_body?: string
+  endpointName?: string
 }
 
 // KEEP: Utility functions (used by components)

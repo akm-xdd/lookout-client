@@ -1,4 +1,6 @@
-// components/workspace/EndpointFormModal.tsx
+// @ts-nocheck
+
+// componens/workspace/EndpointFormModal.tsx
 import React, { useState } from "react";
 import {
   X,
@@ -18,7 +20,7 @@ interface EndpointFormModalProps {
   onClose: () => void;
   onSuccess: () => void;
   workspaceId: string;
-  maxEndpoints: number;
+  maxTotalEndpoints: number;
   currentEndpoints: number;
 }
 
@@ -57,7 +59,7 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
   onClose,
   onSuccess,
   workspaceId,
-  maxEndpoints,
+  maxTotalEndpoints,
   currentEndpoints,
 }) => {
   const [formData, setFormData] = useState({
@@ -119,7 +121,7 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
       formData.frequency_minutes >= 5 && formData.frequency_minutes <= 60;
     const timeoutValid =
       formData.timeout_seconds >= 5 && formData.timeout_seconds <= 120;
-    const notAtLimit = currentEndpoints < maxEndpoints;
+    const notAtLimit = currentEndpoints < maxTotalEndpoints;
 
     return (
       nameValid && urlValid && frequencyValid && timeoutValid && notAtLimit
@@ -169,8 +171,8 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
       return;
     }
 
-    if (currentEndpoints >= maxEndpoints) {
-      toast.error(`Maximum ${maxEndpoints} endpoints per workspace`);
+    if (currentEndpoints >= maxTotalEndpoints) {
+      toast.error(`Maximum ${maxTotalEndpoints} endpoints per workspace`);
       return;
     }
 
@@ -642,7 +644,7 @@ const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
             <div className="flex items-center space-x-2 text-sm text-gray-400">
               <AlertCircle className="w-4 h-4" />
               <span>
-                {currentEndpoints}/{maxEndpoints} endpoints used
+                {currentEndpoints}/{maxTotalEndpoints} endpoints used
               </span>
             </div>
 

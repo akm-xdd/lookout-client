@@ -34,7 +34,7 @@ const OverviewStatsSection: React.FC<OverviewStatsSectionProps> = ({
   // Helper function to get uptime color
   const getUptimeColor = (uptime: number | null | undefined) => {
     if (uptime === null || uptime === undefined || typeof uptime !== 'number') {
-      return 'gray'
+      return 'blue'
     }
     if (uptime >= 99) return 'green'
     if (uptime >= 95) return 'yellow'
@@ -46,26 +46,26 @@ const OverviewStatsSection: React.FC<OverviewStatsSectionProps> = ({
       {/* Workspaces */}
       <OverviewStatCard
         title="Workspaces"
-        value={`${stats.totalWorkspaces}/${data.user?.maxWorkspaces ?? 5}`}
+        value={`${stats.totalWorkspaces}/${data.user?.limits.maxWorkspaces ?? 5}`}
         subtitle={stats.totalWorkspaces === 0 ? 'Get started' : 'Active projects'}
         icon={Layers}
         color="blue"
         progress={{
           current: stats.totalWorkspaces,
-          max: data.user?.maxWorkspaces ?? 5
+          max: data.user?.limits.maxWorkspaces ?? 5
         }}
       />
 
       {/* Total Endpoints */}
       <OverviewStatCard
         title="Total Endpoints"
-        value={`${stats.totalEndpoints}/${data.user?.maxEndpoints ?? 35}`}
+        value={`${stats.totalEndpoints}/${data.user?.limits.maxTotalEndpoints ?? 35}`}
         subtitle={stats.totalEndpoints === 0 ? 'No monitoring yet' : 'Configured endpoints'}
         icon={Globe}
         color="purple"
         progress={{
           current: stats.totalEndpoints,
-          max: data.user?.maxEndpoints ?? 35
+          max: data.user?.limits.maxTotalEndpoints ?? 35
         }}
       />
 

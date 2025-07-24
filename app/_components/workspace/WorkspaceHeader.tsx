@@ -11,7 +11,7 @@ interface WorkspaceHeaderProps {
     name: string
     description: string
     endpointCount: number
-    maxEndpoints: number
+    maxTotalEndpoints: number
     status: 'online' | 'warning' | 'offline' | 'unknown'
     uptime: number | null
     avgResponseTime: number | null
@@ -39,7 +39,7 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   
   // Add safety checks for undefined properties
   const endpointCount = workspace.endpointCount ?? 0
-  const maxEndpoints = workspace.maxEndpoints ?? 7
+  const maxTotalEndpoints = 7
   const endpoints = workspace.endpoints ?? []
   const uptime = workspace.uptime
   const avgResponseTime = workspace.avgResponseTime
@@ -165,7 +165,7 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             <div>
               <span className="text-gray-400">Endpoints: </span>
               <span className="text-white font-medium">
-                {endpointCount}/{maxEndpoints}
+                {endpointCount}/{maxTotalEndpoints}
               </span>
             </div>
 
@@ -217,7 +217,7 @@ const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
           <button
             onClick={handleAddEndpoint}
             className="flex items-center space-x-2 p-2 bg-green-500/20 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-all"
-            disabled={endpointCount >= maxEndpoints}
+            disabled={endpointCount >= maxTotalEndpoints}
           >
             <Plus className="w-4 h-4" />
             <span className="text-sm">Add Endpoint</span>
