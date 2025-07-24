@@ -1,6 +1,5 @@
-// @ts-nocheck
-
 "use client";
+export const dynamic = 'force-dynamic'
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -74,8 +73,8 @@ function generatePDFReport(data: DashboardData, filename: string) {
 
     const stats = [
       ["Total Workspaces", data.workspaces?.length?.toString() || "0"],
-      ["Total Endpoints", data.overview?.total_endpoints?.toString() || "0"],
-      ["Active Endpoints", data.overview?.active_endpoints?.toString() || "0"],
+      ["Total Endpoints", data.overview?.totalEndpoints?.toString() || "0"],
+      ["Active Endpoints", data.overview?.activeEndpoints?.toString() || "0"],
       ["Active Incidents", data.recentIncidents?.length?.toString() || "0"],
     ];
 
@@ -150,8 +149,8 @@ function generateExcelReport(data: DashboardData, filename: string) {
     const overviewData = [
       ["Metric", "Value"],
       ["Total Workspaces", data.workspaces?.length || 0],
-      ["Total Endpoints", data.overview?.total_endpoints || 0],
-      ["Active Endpoints", data.overview?.active_endpoints || 0],
+      ["Total Endpoints", data.overview?.totalEndpoints || 0],
+      ["Active Endpoints", data.overview?.activeEndpoints || 0],
       ["Active Incidents", data.recentIncidents?.length || 0],
       ["Generated", new Date().toISOString()],
     ];
@@ -320,8 +319,8 @@ function generateJSONReport(data: DashboardData, filename: string) {
       report_period: "24_hours",
       summary: {
         total_workspaces: data.workspaces?.length || 0,
-        total_endpoints: data.overview?.total_endpoints || 0,
-        active_endpoints: data.overview?.active_endpoints || 0,
+        totalEndpoints: data.overview?.totalEndpoints || 0,
+        activeEndpoints: data.overview?.activeEndpoints || 0,
         active_incidents: data.recentIncidents?.length || 0,
       },
       data: data,
@@ -680,7 +679,7 @@ export default function DashboardPage() {
                     const hasData =
                       dashboardData &&
                       (dashboardData.workspaces?.length > 0 ||
-                        dashboardData.overview?.total_endpoints > 0);
+                        dashboardData.overview?.totalEndpoints > 0);
 
                     if (!hasData) {
                       toast.error("No data available to download", {
@@ -694,28 +693,28 @@ export default function DashboardPage() {
                   className={`flex items-center gap-1 p-2 transition-colors ${
                     !dashboardData ||
                     (dashboardData.workspaces?.length === 0 &&
-                      dashboardData.overview?.total_endpoints === 0)
+                      dashboardData.overview?.totalEndpoints === 0)
                       ? "text-gray-600 cursor-not-allowed opacity-50"
                       : "text-gray-400 hover:text-white cursor-pointer"
                   }`}
                   whileHover={
                     dashboardData &&
                     (dashboardData.workspaces?.length > 0 ||
-                      dashboardData.overview?.total_endpoints > 0)
+                      dashboardData.overview?.totalEndpoints > 0)
                       ? { scale: 1.05 }
                       : {}
                   }
                   whileTap={
                     dashboardData &&
                     (dashboardData.workspaces?.length > 0 ||
-                      dashboardData.overview?.total_endpoints > 0)
+                      dashboardData.overview?.totalEndpoints > 0)
                       ? { scale: 0.95 }
                       : {}
                   }
                   title={
                     !dashboardData ||
                     (dashboardData.workspaces?.length === 0 &&
-                      dashboardData.overview?.total_endpoints === 0)
+                      dashboardData.overview?.totalEndpoints === 0)
                       ? "No data to download"
                       : "Download dashboard data"
                   }

@@ -8,11 +8,11 @@ export interface DashboardUser {
   email: string
   limits: {
     max_workspaces: number
-    max_total_endpoints: number
+    max_totalEndpoints: number
   }
   current: {
     workspace_count: number
-    total_endpoints: number
+    totalEndpoints: number
   }
 }
 
@@ -50,8 +50,8 @@ export interface EndpointPerformance {
 }
 
 export interface DashboardOverview {
-  total_endpoints: number
-  active_endpoints: number
+  totalEndpoints: number
+  activeEndpoints: number
   total_workspaces: number
   uptimeHistory: Array<{ date: string; uptime: number }>
   responseTimeHistory: Array<{ timestamp: string; avgResponseTime: number }>
@@ -118,20 +118,20 @@ function transformDashboardData(backendData: any): any {
       email: backendData.user.email,
       limits: {
         maxWorkspaces: backendData.user.limits.max_workspaces,
-        maxTotalEndpoints: backendData.user.limits.max_total_endpoints
+        maxTotalEndpoints: backendData.user.limits.max_totalEndpoints
       },
       current: {
         workspaceCount: backendData.user.current.workspace_count,
-        totalEndpoints: backendData.user.current.total_endpoints
+        totalEndpoints: backendData.user.current.totalEndpoints
       },
       // Add legacy fields for compatibility
       maxWorkspaces: backendData.user.limits.max_workspaces,
-      maxTotalEndpoints: backendData.user.limits.max_total_endpoints
+      maxTotalEndpoints: backendData.user.limits.max_totalEndpoints
     },
     workspaces: transformedWorkspaces,
     overview: {
-      totalEndpoints: backendData.overview.total_endpoints,
-      activeEndpoints: backendData.overview.active_endpoints,
+      totalEndpoints: backendData.overview.totalEndpoints,
+      activeEndpoints: backendData.overview.activeEndpoints,
       totalWorkspaces: backendData.overview.total_workspaces,
       
       // Chart data - directly use the new comprehensive data

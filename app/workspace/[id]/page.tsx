@@ -236,7 +236,7 @@ export default function WorkspaceDetailPage() {
         <EndpointFormModal
           workspaceId={workspaceId}
           maxTotalEndpoints={7} // TODO: Get from user limits
-          currentEndpoints={workspaceStats.overview.total_endpoints}
+          currentEndpoints={workspaceStats.overview.totalEndpoints}
           isOpen={addEndpointModalOpen}
           onClose={() => setAddEndpointModalOpen(false)}
           onSuccess={handleEndpointAdded}
@@ -261,7 +261,7 @@ export default function WorkspaceDetailPage() {
             id: workspaceStats.workspace.id,
             name: workspaceStats.workspace.name,
             description: workspaceStats.workspace.description,
-            endpointCount: workspaceStats.overview.total_endpoints,
+            endpointCount: workspaceStats.overview.totalEndpoints,
           }}
         />
       </div>

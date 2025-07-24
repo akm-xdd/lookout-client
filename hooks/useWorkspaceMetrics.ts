@@ -30,8 +30,8 @@ export interface WorkspaceStatsEndpoint {
 }
 
 export interface WorkspaceStatsOverview {
-  total_endpoints: number
-  active_endpoints: number
+  totalEndpoints: number
+  activeEndpoints: number
   online_endpoints: number
   warning_endpoints: number
   offline_endpoints: number
