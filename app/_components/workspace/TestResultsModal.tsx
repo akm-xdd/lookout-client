@@ -44,7 +44,16 @@ const TestResultsModal: React.FC<TestResultsModalProps> = ({
 
   const formatTimestamp = (timestamp: number) => {
     // Handle timestamp in milliseconds (from Date.now())
-    const date = new Date(timestamp);
+
+    if (typeof timestamp === "number") {
+      return new Date(timestamp).toLocaleString();
+    }
+
+    const utcTimestamp =
+      timestamp.includes("Z") || timestamp.includes("+")
+        ? timestamp
+        : timestamp + "Z";
+    const date = new Date(utcTimestamp);
     return date.toLocaleString();
   };
 

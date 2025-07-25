@@ -38,7 +38,10 @@ const ViewEndpointModal: React.FC<ViewEndpointModalProps> = ({
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString()
+    const utcTimestamp = dateString.includes('Z') || dateString.includes('+')
+    ? dateString 
+    : dateString + 'Z'
+    return new Date(utcTimestamp).toLocaleString()
   }
 
   return (

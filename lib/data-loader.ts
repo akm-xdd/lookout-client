@@ -135,8 +135,12 @@ export function formatResponseTime(responseTime: number | null): string {
 
 export function formatLastCheck(lastCheck: string | null): string {
   if (!lastCheck) return 'Never checked'
+
+  const utcTimestamp = lastCheck.includes('Z') || lastCheck.includes('+') 
+    ? lastCheck 
+    : lastCheck + 'Z'
   
-  const date = new Date(lastCheck)
+  const date = new Date(utcTimestamp)
   const now = new Date()
   const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
   
@@ -147,7 +151,10 @@ export function formatLastCheck(lastCheck: string | null): string {
 }
 
 export function formatCreatedAt(createdAt: string): string {
-  const date = new Date(createdAt)
+  const utcTimestamp = createdAt.includes('Z') || createdAt.includes('+')
+    ? createdAt 
+    : createdAt + 'Z'
+  const date = new Date(utcTimestamp)
   return `Created ${date.toLocaleDateString()}`
 }
 
