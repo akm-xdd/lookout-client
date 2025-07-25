@@ -31,7 +31,7 @@ export function transformForWorkspaceHeader(stats: WorkspaceStatsResponse): Work
     id: workspace.id,
     name: workspace.name,
     description: workspace.description,
-    endpointCount: overview.totalEndpoints,
+    endpointCount: overview.total_endpoints,
     maxTotalEndpoints: 7, // This could come from user limits in the future
     status: health.status as any, // Map backend status to frontend
     uptime: overview.avg_uptime_24h,
@@ -63,7 +63,7 @@ export function transformForWorkspaceCharts(stats: WorkspaceStatsResponse): Work
   return {
     id: workspace.id,
     name: workspace.name,
-    endpointCount: overview.totalEndpoints,
+    endpointCount: overview.total_endpoints,
     uptime: overview.avg_uptime_24h,
     avgResponseTime: overview.avg_response_time_24h,
     activeIncidents: health.active_incidents,
@@ -166,7 +166,7 @@ export function transformForHealthSummary(stats: WorkspaceStatsResponse): Health
     warningEndpoints: overview.warning_endpoints,
     offlineEndpoints: overview.offline_endpoints,
     unknownEndpoints: overview.unknown_endpoints,
-    activeEndpoints: overview.activeEndpoints,
+    activeEndpoints: overview.active_endpoints,
     healthScore: health.health_score,
     // NEW: Add weather properties
     weather: health.weather,
