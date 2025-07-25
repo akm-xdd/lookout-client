@@ -672,7 +672,7 @@ export default function DashboardPage() {
                 </motion.button>
 
                 {/* Download Button with Portal Dropdown */}
-                <motion.button
+                {/* <motion.button
                   ref={downloadButtonRef}
                   onClick={() => {
                     // Check if there's any data to download
@@ -725,7 +725,7 @@ export default function DashboardPage() {
                       showDownloadOptions ? "rotate-180" : ""
                     }`}
                   />
-                </motion.button>
+                </motion.button> */}
 
                 <motion.button
                   onClick={handleSettings}
@@ -751,13 +751,13 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Portal Dropdown */}
+        {/* Portal Dropdown
         <DownloadDropdown
           isOpen={showDownloadOptions}
           onClose={() => setShowDownloadOptions(false)}
           onDownload={handleDownload}
           triggerRef={downloadButtonRef}
-        />
+        /> */}
 
         {/* Main Content */}
         <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
