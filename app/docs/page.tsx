@@ -372,7 +372,7 @@ const GettingStartedSection: React.FC = () => (
       <div className="flex items-start space-x-3">
         <CheckCircle className="w-6 h-6 text-green-400 mt-1" />
         <div>
-          <h4 className="font-semibold text-green-300 mb-2">Quick Start Checklist</h4>
+          <h4 className="font-semibold text-green-300 mb-2">Quick Start Checklist (Not an actual checklist)</h4>
           <div className="grid md:grid-cols-2 gap-2">
             <label className="flex items-center space-x-2 text-green-200 text-sm">
               <input type="checkbox" className="rounded border-green-500" />

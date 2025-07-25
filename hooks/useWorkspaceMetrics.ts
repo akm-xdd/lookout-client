@@ -99,7 +99,7 @@ export interface WorkspaceStatsResponse {
  * 
  * Features:
  * - Tanstack Query caching and background updates
- * - 30-second refresh interval for real-time monitoring
+ * - 5-minute refresh interval for real-time monitoring
  * - Automatic error handling and retry logic
  * - Optimistic updates and cache invalidation
  */
@@ -113,8 +113,8 @@ export function useWorkspaceStats(
 ): UseQueryResult<WorkspaceStatsResponse, Error> {
   const {
     enabled = true,
-    refetchInterval = 30000, // 30 seconds
-    staleTime = 25000, // 25 seconds (slightly less than refetch)
+    refetchInterval = 5 * 60 * 1000, // 5 minutes
+    staleTime = 4 * 60 * 1000 // 4 minutes
   } = options || {}
 
   return useQuery({
@@ -127,14 +127,15 @@ export function useWorkspaceStats(
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     
     // Cache management
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes after component unmount
+    gcTime: 5 * 60 * 1000,
     
     // Error handling
-    throwOnError: false, // Let components handle errors gracefully
+    throwOnError: false,
     
     // Background updates
-    refetchOnWindowFocus: true,
-    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: true
   })
 }
 
