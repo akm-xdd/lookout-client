@@ -39,11 +39,11 @@ export const authHelpers = {
     })
     
     // console.log('🔑 SignIn result:', { 
-      user: data.user?.email, 
-      session: !!data.session,
-      error 
-    })
-    return { data, error }
+    //   user: data.user?.email, 
+    //   session: !!data.session,
+    //   error 
+    // })
+    // return { data, error }
   },
 
   // Sign in with GitHub - FIXED with proper PKCE flow
