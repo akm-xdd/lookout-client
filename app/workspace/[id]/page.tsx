@@ -54,7 +54,7 @@ export default function WorkspaceDetailPage() {
     console.log("🔄 Manual workspace refresh triggered");
     try {
       await refresh();
-      toast.success(`Workspace refreshed • ${getDataFreshnessText(workspaceStats?.generated_at || '')}`);
+      toast.success("Worskspace refreshed!");
     } catch (error) {
       console.error('Refresh error:', error);
       toast.error("Failed to refresh workspace");
@@ -236,7 +236,7 @@ export default function WorkspaceDetailPage() {
         <EndpointFormModal
           workspaceId={workspaceId}
           maxTotalEndpoints={7} // TODO: Get from user limits
-          currentEndpoints={workspaceStats.overview.totalEndpoints}
+          currentEndpoints={workspaceStats.overview.total_endpoints}
           isOpen={addEndpointModalOpen}
           onClose={() => setAddEndpointModalOpen(false)}
           onSuccess={handleEndpointAdded}
@@ -261,7 +261,7 @@ export default function WorkspaceDetailPage() {
             id: workspaceStats.workspace.id,
             name: workspaceStats.workspace.name,
             description: workspaceStats.workspace.description,
-            endpointCount: workspaceStats.overview.totalEndpoints,
+            endpointCount: workspaceStats.overview.total_endpoints,
           }}
         />
       </div>
