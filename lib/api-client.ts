@@ -49,7 +49,7 @@ async function getValidToken(): Promise<string> {
 }
 
 async function refreshToken(): Promise<string> {
-  console.log('🔄 Refreshing token proactively...')
+  // console.log('🔄 Refreshing token proactively...')
   
   const { data, error } = await supabase.auth.refreshSession()
   
@@ -58,7 +58,7 @@ async function refreshToken(): Promise<string> {
     throw new APIError(401, 'Token refresh failed')
   }
 
-  console.log('✅ Token refreshed successfully')
+  // console.log('✅ Token refreshed successfully')
   return data.session.access_token
 }
 
@@ -91,7 +91,7 @@ async function apiCall(endpoint: string, options: RequestInit = {}, retryCount =
 
       // Handle 401 errors with retry logic
       if (response.status === 401 && retryCount < maxRetries) {
-        console.log('🔄 401 error, attempting token refresh and retry...')
+        // console.log('🔄 401 error, attempting token refresh and retry...')
         
         // Force a token refresh
         refreshPromise = refreshToken()
@@ -131,7 +131,7 @@ export function enhanceAuthContext() {
   // Listen for token refresh events to clear any cached state
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'TOKEN_REFRESHED') {
-      console.log('🔄 Token refreshed by Supabase')
+      // console.log('🔄 Token refreshed by Supabase')
       // Clear any refresh promise since Supabase handled it
       refreshPromise = null
     } else if (event === 'SIGNED_OUT') {

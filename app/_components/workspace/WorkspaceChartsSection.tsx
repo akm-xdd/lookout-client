@@ -55,7 +55,7 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
   timeSeriesData = [],
   className = "",
 }) => {
-  console.log("🔍 WorkspaceChartsSection DEBUG (UNIFIED):", {
+  // console.log("🔍 WorkspaceChartsSection DEBUG (UNIFIED):", {
     workspaceData,
     endpointStats,
     endpointStatsLength: endpointStats.length,
@@ -73,7 +73,7 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
   const hasEndpoints = endpointCount > 0;
   const hasMonitoringData = endpointStats.length > 0;
 
-  console.log("🔍 Calculated flags:", {
+  // console.log("🔍 Calculated flags:", {
     endpointCount,
     hasEndpoints,
     hasMonitoringData,

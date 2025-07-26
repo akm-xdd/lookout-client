@@ -4,9 +4,9 @@ import { createBrowserClient } from '@supabase/ssr'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-console.log('🔍 Supabase Config Check:')
-console.log('URL:', supabaseUrl)
-console.log('Key (first 10 chars):', supabaseAnonKey?.substring(0, 10) + '...')
+// console.log('🔍 Supabase Config Check:')
+// console.log('URL:', supabaseUrl)
+// console.log('Key (first 10 chars):', supabaseAnonKey?.substring(0, 10) + '...')
 
 // Create browser client for client-side operations
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
@@ -15,7 +15,7 @@ export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
 export const authHelpers = {
   // Sign up with email/password
   async signUp(email: string, password: string) {
-    console.log('🚀 Starting signUp for:', email)
+    // console.log('🚀 Starting signUp for:', email)
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -25,20 +25,20 @@ export const authHelpers = {
       }
     })
     
-    console.log('📧 SignUp result:', { data, error })
+    // console.log('📧 SignUp result:', { data, error })
     return { data, error }
   },
 
   // Sign in with email/password
   async signIn(email: string, password: string) {
-    console.log('🔑 Starting signIn for:', email)
+    // console.log('🔑 Starting signIn for:', email)
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
     
-    console.log('🔑 SignIn result:', { 
+    // console.log('🔑 SignIn result:', { 
       user: data.user?.email, 
       session: !!data.session,
       error 
@@ -48,8 +48,8 @@ export const authHelpers = {
 
   // Sign in with GitHub - FIXED with proper PKCE flow
   async signInWithGitHub() {
-    console.log('🐙 Starting GitHub OAuth...')
-    console.log('🔗 Redirect URL will be:', `${window.location.origin}/auth/callback`)
+    // console.log('🐙 Starting GitHub OAuth...')
+    // console.log('🔗 Redirect URL will be:', `${window.location.origin}/auth/callback`)
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
@@ -58,22 +58,22 @@ export const authHelpers = {
       }
     })
     
-    console.log('🐙 GitHub OAuth result:', { data, error })
+    // console.log('🐙 GitHub OAuth result:', { data, error })
     return { data, error }
   },
 
   // Sign out
   async signOut() {
-    console.log('👋 Signing out...')
+    // console.log('👋 Signing out...')
     const { error } = await supabase.auth.signOut()
-    console.log('👋 SignOut result:', { error })
+    // console.log('👋 SignOut result:', { error })
     return { error }
   },
 
   // Get current session
   async getSession() {
     const { data: { session }, error } = await supabase.auth.getSession()
-    console.log('📱 Current session:', { 
+    // console.log('📱 Current session:', { 
       hasSession: !!session, 
       userEmail: session?.user?.email,
       error 
@@ -84,7 +84,7 @@ export const authHelpers = {
   // Get current user
   async getUser() {
     const { data: { user }, error } = await supabase.auth.getUser()
-    console.log('👤 Current user:', { 
+    // console.log('👤 Current user:', { 
       hasUser: !!user, 
       userEmail: user?.email,
       error 
@@ -95,7 +95,7 @@ export const authHelpers = {
 
 // Test connection on import
 supabase.auth.getSession().then(({ data, error }) => {
-  console.log('🔌 Initial connection test:', { 
+  // console.log('🔌 Initial connection test:', { 
     hasSession: !!data.session,
     userEmail: data.session?.user?.email,
     error 

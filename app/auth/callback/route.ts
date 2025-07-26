@@ -6,9 +6,9 @@ import { cookies } from 'next/headers'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   
-  console.log('🔄 Auth callback received:')
-  console.log('- Full URL:', request.url)
-  console.log('- Search params:', Object.fromEntries(searchParams.entries()))
+  // console.log('🔄 Auth callback received:')
+  // console.log('- Full URL:', request.url)
+  // console.log('- Search params:', Object.fromEntries(searchParams.entries()))
   
   const code = searchParams.get('code')
   const error = searchParams.get('error')
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    console.log('✅ Authorization code received:', code.substring(0, 10) + '...')
+    // console.log('✅ Authorization code received:', code.substring(0, 10) + '...')
     
     const cookieStore =  await cookies()
     
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     )
     
     try {
-      console.log('🔄 Exchanging code for session...')
+      // console.log('🔄 Exchanging code for session...')
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
       
       if (exchangeError) {
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
       }
       
       if (data.session) {
-        console.log('✅ Session created successfully:', {
+        // console.log('✅ Session created successfully:', {
           userId: data.session.user.id,
           email: data.session.user.email,
           provider: data.session.user.app_metadata.provider
@@ -91,6 +91,6 @@ export async function GET(request: Request) {
     }
   }
 
-  console.log('❌ No code parameter in callback')
+  // console.log('❌ No code parameter in callback')
   return NextResponse.redirect(`${origin}/login?error=no_code`)
 }

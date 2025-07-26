@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(false);
         setInitialized(true);
 
-        console.log("Initial session check:", {
+        // console.log("Initial session check:", {
           hasSession: !!session,
           pathname,
           userEmail: session?.user?.email,
@@ -88,7 +88,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (session && user) {
       // User is authenticated
       if (pathname === "/login" || pathname === "/register") {
-        console.log(
+        // console.log(
           "Authenticated user on auth page, redirecting to dashboard"
         );
         router.push("/dashboard");
@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } else {
       // User is not authenticated
       if (!isPublicRoute && pathname !== "/auth/callback") {
-        console.log(
+        // console.log(
           "Unauthenticated user on protected route, redirecting to login"
         );
         router.push("/login");
@@ -116,13 +116,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Only redirect if user is on login/register pages
         const authPages = ["/login", "/register",  "/auth/callback"];
         if (authPages.includes(pathname)) {
-          console.log("Redirecting to dashboard from auth page");
+          // console.log("Redirecting to dashboard from auth page");
           router.push("/dashboard");
         } else {
-          console.log("User signed in but staying on current page:", pathname);
+          // console.log("User signed in but staying on current page:", pathname);
         }
       } else if (event === "SIGNED_OUT") {
-        console.log("User signed out, redirecting to home");
+        // console.log("User signed out, redirecting to home");
         router.push("/");
       }
     });

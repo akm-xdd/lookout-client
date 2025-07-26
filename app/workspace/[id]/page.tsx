@@ -51,7 +51,7 @@ export default function WorkspaceDetailPage() {
 
   // NEW: Enhanced refresh handler with better UX
   const handleManualRefresh = async () => {
-    console.log("🔄 Manual workspace refresh triggered");
+    // console.log("🔄 Manual workspace refresh triggered");
     try {
       await refresh();
       toast.success("Worskspace refreshed!");

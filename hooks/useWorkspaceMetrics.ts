@@ -147,7 +147,7 @@ export function useRefreshWorkspaceStats(workspaceId: string) {
   const { refetch, isFetching } = useWorkspaceStats(workspaceId, { enabled: false })
   
   const refresh = async () => {
-    console.log(`🔄 Manual refresh triggered for workspace ${workspaceId}`)
+    // console.log(`🔄 Manual refresh triggered for workspace ${workspaceId}`)
     return await refetch()
   }
   

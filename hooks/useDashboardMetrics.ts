@@ -193,7 +193,7 @@ export const useRefreshDashboardMetrics = () => {
   const { refetch, isFetching } = useDashboardMetrics({ enabled: false });
   
   const refresh = async () => {
-    console.log('🔄 Manual dashboard metrics refresh triggered');
+    // console.log('🔄 Manual dashboard metrics refresh triggered');
     return await refetch();
   };
   
