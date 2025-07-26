@@ -64,11 +64,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(false);
         setInitialized(true);
 
-        // console.log("Initial session check:", {
-          hasSession: !!session,
-          pathname,
-          userEmail: session?.user?.email,
-        });
+        // // console.log("Initial session check:", {
+        //   hasSession: !!session,
+        //   pathname,
+        //   userEmail: session?.user?.email,
+        // });
       } catch (error) {
         console.error("Session initialization error:", error);
         setLoading(false);
@@ -89,16 +89,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // User is authenticated
       if (pathname === "/login" || pathname === "/register") {
         // console.log(
-          "Authenticated user on auth page, redirecting to dashboard"
-        );
+        //   "Authenticated user on auth page, redirecting to dashboard"
+        // );
         router.push("/dashboard");
       }
     } else {
       // User is not authenticated
       if (!isPublicRoute && pathname !== "/auth/callback") {
         // console.log(
-          "Unauthenticated user on protected route, redirecting to login"
-        );
+        //   "Unauthenticated user on protected route, redirecting to login"
+        // );
         router.push("/login");
       }
     }

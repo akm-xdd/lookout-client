@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
   // Check for OAuth errors first
   if (error) {
-    console.error('❌ OAuth error in callback:', { error, errorDescription })
+    // console.error('❌ OAuth error in callback:', { error, errorDescription })
     return NextResponse.redirect(`${origin}/login?error=${error}&error_description=${encodeURIComponent(errorDescription || '')}`)
   }
 
@@ -55,16 +55,16 @@ export async function GET(request: Request) {
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
       
       if (exchangeError) {
-        console.error('❌ Code exchange error:', exchangeError)
+        // console.error('❌ Code exchange error:', exchangeError)
         return NextResponse.redirect(`${origin}/login?error=exchange_failed&error_description=${encodeURIComponent(exchangeError.message)}`)
       }
       
       if (data.session) {
         // console.log('✅ Session created successfully:', {
-          userId: data.session.user.id,
-          email: data.session.user.email,
-          provider: data.session.user.app_metadata.provider
-        })
+        //   userId: data.session.user.id,
+        //   email: data.session.user.email,
+        //   provider: data.session.user.app_metadata.provider
+        // })
         
         // Add success parameter for OAuth login toast
         const redirectUrl = `${next}?success=oauth`
@@ -81,12 +81,12 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}${redirectUrl}`)
         }
       } else {
-        console.error('❌ No session in exchange response')
+        // console.error('❌ No session in exchange response')
         return NextResponse.redirect(`${origin}/login?error=no_session`)
       }
       
     } catch (err) {
-      console.error('💥 Unexpected error in callback:', err)
+      // console.error('💥 Unexpected error in callback:', err)
       return NextResponse.redirect(`${origin}/login?error=callback_error&error_description=${encodeURIComponent(String(err))}`)
     }
   }

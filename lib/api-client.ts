@@ -54,7 +54,7 @@ async function refreshToken(): Promise<string> {
   const { data, error } = await supabase.auth.refreshSession()
   
   if (error || !data.session?.access_token) {
-    console.error('❌ Token refresh failed:', error)
+    // console.error('❌ Token refresh failed:', error)
     throw new APIError(401, 'Token refresh failed')
   }
 
@@ -104,7 +104,7 @@ async function apiCall(endpoint: string, options: RequestInit = {}, retryCount =
           return apiCall(endpoint, options, retryCount + 1)
         } catch (refreshError) {
           refreshPromise = null
-          console.error('❌ Retry failed after token refresh:', refreshError)
+          // console.error('❌ Retry failed after token refresh:', refreshError)
           throw new APIError(401, 'Authentication failed after retry')
         }
       }

@@ -56,29 +56,29 @@ const WorkspaceChartsSection: React.FC<WorkspaceChartsSectionProps> = ({
   className = "",
 }) => {
   // console.log("🔍 WorkspaceChartsSection DEBUG (UNIFIED):", {
-    workspaceData,
-    endpointStats,
-    endpointStatsLength: endpointStats.length,
-    healthStats,
-    hasHealthStats: !!healthStats,
-    healthStatsWeather: healthStats?.weather,
-    healthStatsEmoji: healthStats?.weather_emoji,
-    healthStatsDescription: healthStats?.weather_description,
-    hasMonitoringData: endpointStats.length > 0,
-    recentIncidents,
-    incidentCount: recentIncidents.length,
-  });
+  //   workspaceData,
+  //   endpointStats,
+  //   endpointStatsLength: endpointStats.length,
+  //   healthStats,
+  //   hasHealthStats: !!healthStats,
+  //   healthStatsWeather: healthStats?.weather,
+  //   healthStatsEmoji: healthStats?.weather_emoji,
+  //   healthStatsDescription: healthStats?.weather_description,
+  //   hasMonitoringData: endpointStats.length > 0,
+  //   recentIncidents,
+  //   incidentCount: recentIncidents.length,
+  // });
 
   const endpointCount = workspaceData.endpointCount ?? 0;
   const hasEndpoints = endpointCount > 0;
   const hasMonitoringData = endpointStats.length > 0;
 
   // console.log("🔍 Calculated flags:", {
-    endpointCount,
-    hasEndpoints,
-    hasMonitoringData,
-    healthStatsActive: healthStats?.activeEndpoints,
-  });
+  //   endpointCount,
+  //   hasEndpoints,
+  //   hasMonitoringData,
+  //   healthStatsActive: healthStats?.activeEndpoints,
+  // });
 
   // Use pre-calculated stats from backend instead of client-side calculation
   const stats = healthStats || {

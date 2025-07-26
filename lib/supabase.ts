@@ -4,9 +4,9 @@ import { createBrowserClient } from '@supabase/ssr'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-console.log('🔍 Supabase Config Check:')
-console.log('URL:', supabaseUrl)
-console.log('Key (first 10 chars):', supabaseAnonKey?.substring(0, 10) + '...')
+// console.log('🔍 Supabase Config Check:')
+// console.log('URL:', supabaseUrl)
+// console.log('Key (first 10 chars):', supabaseAnonKey?.substring(0, 10) + '...')
 
 // Create browser client for client-side operations
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
@@ -31,7 +31,7 @@ export const authHelpers = {
 
   // Sign in with email/password
   async signIn(email: string, password: string) {
-    console.log('🔑 Starting signIn for:', email)
+    // console.log('🔑 Starting signIn for:', email)
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
