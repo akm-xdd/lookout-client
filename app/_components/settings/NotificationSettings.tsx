@@ -7,7 +7,6 @@ import {
   AlertTriangle, 
   Save,
   Info,
-  Check,
   X,
   Webhook
 } from "lucide-react";
@@ -41,6 +40,10 @@ const NotificationSettings: React.FC = () => {
   // Check if form is valid for saving
   const isFormValid = (): boolean => {
     if (!formData.email_notifications_enabled) return true;
+    
+    // If email address has been changed before, we don't validate the email field
+    if (settings?.email_address_changed) return true;
+    
     return isValidEmail(formData.notification_email);
   };
 
@@ -65,7 +68,7 @@ const NotificationSettings: React.FC = () => {
       if (settings) {
         const hasChanges = 
           updated.email_notifications_enabled !== settings.email_notifications_enabled ||
-          updated.notification_email !== settings.notification_email ||
+          (updated.notification_email !== settings.notification_email && !settings.email_address_changed) ||
           updated.failure_threshold !== settings.failure_threshold;
         setHasChanges(hasChanges);
       }
@@ -93,9 +96,12 @@ const NotificationSettings: React.FC = () => {
         if (formData.email_notifications_enabled !== settings.email_notifications_enabled) {
           updates.email_notifications_enabled = formData.email_notifications_enabled;
         }
-        if (formData.notification_email !== settings.notification_email) {
+        
+        // Only include email change if it's allowed (not already changed)
+        if (!settings.email_address_changed && formData.notification_email !== settings.notification_email) {
           updates.notification_email = formData.notification_email;
         }
+        
         if (formData.failure_threshold !== settings.failure_threshold) {
           updates.failure_threshold = formData.failure_threshold;
         }
@@ -237,14 +243,14 @@ const NotificationSettings: React.FC = () => {
                   type="email"
                   value={formData.notification_email}
                   onChange={(e) => handleInputChange('notification_email', e.target.value)}
-                  disabled={!formData.email_notifications_enabled}
+                  disabled={!formData.email_notifications_enabled || settings?.email_address_changed}
                   className={`
                     w-full px-4 py-3 bg-black/50 border rounded-lg text-white placeholder-gray-400 transition-all
-                    ${formData.email_notifications_enabled 
+                    ${formData.email_notifications_enabled && !settings?.email_address_changed
                       ? 'border-white/20 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20' 
                       : 'border-white/10 text-gray-500 cursor-not-allowed'
                     }
-                    ${!isValidEmail(formData.notification_email) && formData.notification_email && formData.email_notifications_enabled
+                    ${!isValidEmail(formData.notification_email) && formData.notification_email && formData.email_notifications_enabled && !settings?.email_address_changed
                       ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
                       : ''
                     }
@@ -261,7 +267,7 @@ const NotificationSettings: React.FC = () => {
               </div>
               
               {/* Email Validation Error */}
-              {!isValidEmail(formData.notification_email) && formData.notification_email && formData.email_notifications_enabled && (
+              {!isValidEmail(formData.notification_email) && formData.notification_email && formData.email_notifications_enabled && !settings?.email_address_changed && (
                 <div className="text-red-400 text-sm flex items-center space-x-1">
                   <X className="w-4 h-4" />
                   <span>Please enter a valid email address</span>
@@ -272,10 +278,10 @@ const NotificationSettings: React.FC = () => {
                 <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
                   <div className="flex items-center space-x-2 text-orange-400">
                     <Info className="w-4 h-4" />
-                    <span className="text-sm font-medium">Email Already Changed</span>
+                    <span className="text-sm font-medium">Email Change Used</span>
                   </div>
                   <p className="text-orange-300 text-sm mt-1">
-                    You have already used your one-time email change. Contact support if you need to change it again.
+                    You have already used your one-time email change. The email address field is now locked. Contact support if you need to change it again.
                   </p>
                 </div>
               )}
