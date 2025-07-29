@@ -27,6 +27,8 @@ import { DashboardData } from "@/lib/data-loader";
 import Link from "next/link";
 import Image from "next/image";
 
+import { useRouter } from "next/navigation";
+
 // Download functionality (fixed)
 async function generateDownload(data: DashboardData, format: string) {
   const timestamp = new Date().toISOString().split("T")[0];
@@ -507,11 +509,10 @@ export default function DashboardPage() {
     await signOut();
   };
 
+  const router = useRouter();
+
   const handleSettings = () => {
-    toast.info("Settings coming soon!", {
-      description: "User settings page is being built",
-      duration: 3000,
-    });
+    router.push("/settings");
   };
 
   const handleDownload = async (format: "pdf" | "excel" | "csv" | "json") => {
