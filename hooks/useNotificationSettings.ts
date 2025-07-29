@@ -22,11 +22,9 @@ interface NotificationSettingsUpdate {
 }
 
 
-// const API_BASE_URL = process.env.NODE_ENV === 'production' 
-//   ? 'https://api.lookoutapi.xyz' 
-//   : 'http://localhost:8000';
 
-const API_BASE_URL = 'http://localhost:8000'; 
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 // Hook
 export const useNotificationSettings = () => {
