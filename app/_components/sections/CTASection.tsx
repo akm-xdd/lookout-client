@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Github, CheckCircle } from 'lucide-react';
+import { ArrowRight, BookOpen, CheckCircle } from 'lucide-react';
 
 interface TrustSignal {
   text: string;
@@ -26,7 +26,7 @@ const CTASection: React.FC<CTASectionProps> = ({
   title = "Ready to Keep Your Projects Alive?",
   subtitle = "Start monitoring your side projects and get notified when something goes wrong",
   primaryButtonText = "Get Started Free",
-  secondaryButtonText = "View Source",
+  secondaryButtonText = "Check Out the Blog",
   trustSignals = defaultTrustSignals,
   onPrimaryClick,
   onSecondaryClick
@@ -53,7 +53,7 @@ const CTASection: React.FC<CTASectionProps> = ({
             onClick={onSecondaryClick}
             className="px-8 py-4 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 hover:bg-white/10 transition-all flex items-center space-x-2 text-lg font-medium cursor-pointer"
           >
-            <Github className="w-5 h-5" />
+            <BookOpen className="w-5 h-5" />
             <span>{secondaryButtonText}</span>
           </button>
         </div>

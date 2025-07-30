@@ -1,8 +1,19 @@
 import type { NextConfig } from "next";
+import createMDX from '@next/mdx'
+import rehypeHighlight from 'rehype-highlight'
 
 const nextConfig: NextConfig = {
   eslint: {
-    ignoreDuringBuilds: true, }
+    ignoreDuringBuilds: true,
+  },
+  pageExtensions: ['ts', 'js', 'tsx', 'jsx', 'mdx'],
 };
 
-export default nextConfig;
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: [],
+    rehypePlugins: [rehypeHighlight],
+  },
+})
+
+export default withMDX(nextConfig);

@@ -1,0 +1,86 @@
+---
+title: "LookOut is Live: Simple Monitoring for Developers"
+date: "2024-07-30"
+excerpt: "After months of building and testing side projects, LookOut is here for solo devs to automate monitoring."
+category: "Launch"
+tags: ["launch", "monitoring", "free", "developer-tools"]
+---
+
+# LookOut is Live: Simple Monitoring for Developers
+
+LookOut is officially available. It's a monitoring service I built to solve a specific problem: keeping free-tier apps awake and tracking basic uptime.
+
+## What It Does
+
+- **Keeps apps awake**: Regular pings to prevent your Heroku/Render/Railway apps from sleeping
+- **Basic monitoring**: Track uptime and response times with simple charts
+- **Free to use**: Monitor up to 35 endpoints across 5 workspaces
+- **Export data**: Download your monitoring data in JSON, CSV, or Excel
+
+## Why I Built This
+
+My side projects kept sleeping on free hosting platforms. When sharing portfolio links, there was always that awkward "Your app is starting up..." moment.
+
+Existing monitoring tools either cost money or were too complex for simple projects. I needed something that would:
+
+1. Ping my apps every few minutes
+2. Show basic uptime stats  
+3. Not require enterprise-level setup
+
+## Current Features
+
+### Monitoring
+- HTTP endpoint monitoring (GET, POST, etc.)
+- Custom headers and request bodies
+- 5-minute to 1-hour check frequencies
+- Response time tracking
+
+### Organization
+- 5 workspaces per user
+- 7 endpoints per workspace
+- Simple dashboard with charts
+
+### Data Export
+- JSON, CSV, Excel, and PDF formats
+- Historical data access
+- No vendor lock-in
+
+<Callout type="info">
+**Honest disclaimer**: This is a side project. It works well for basic monitoring needs, but it's not enterprise-grade infrastructure monitoring.
+</Callout>
+
+## Getting Started
+
+1. Sign up at [lookoutapi.xyz](/)
+2. Add your endpoint URL
+3. Configure check frequency
+4. That's it
+
+Setup takes about 2 minutes. No credit card required.
+
+## What's Next
+
+I'm planning to add:
+- Slack/Discord notifications
+- Status page generation
+- API access
+- Team collaboration features
+
+Timeline depends on usage and feedback.
+
+## Technical Details
+
+- Built with Next.js, TypeScript, and Supabase
+- Monitoring workers across multiple locations
+- 90 days of detailed logs, 1 year of aggregated stats
+- Response times under 100ms for dashboard loads
+
+## Try It Out
+
+LookOut is free and available now. If you're a developer with apps on free hosting tiers, it might be useful.
+
+**[Start monitoring →](/)** • **[Read docs →](/docs)**
+
+---
+
+*Questions or feedback? Email me at founder@lookoutapi.xyz*

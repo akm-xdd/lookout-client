@@ -83,7 +83,7 @@ const Footer: React.FC<FooterProps> = ({
                   <Twitter className="w-5 h-5" />
                 </a>
                 <a 
-                  href="mailto:support@lookout.dev" 
+                  href="mailto:ctfu.anand@outlook.com" 
                   className="text-gray-400 hover:text-white transition-colors"
                   aria-label="Email Support"
                 >
@@ -108,7 +108,7 @@ const Footer: React.FC<FooterProps> = ({
                 </Link>
               </li>
               <li>
-                <a 
+                <Link 
                   href="https://github.com/akm-xdd/lookout-client/releases" 
                   target="_blank"
                   rel="noopener noreferrer"
@@ -116,7 +116,13 @@ const Footer: React.FC<FooterProps> = ({
                 >
                   Changelog
                   <ExternalLink className="w-3 h-3" />
-                </a>
+                </Link>
+              </li>
+
+              <li>
+                <Link href="/blog" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  Blog
+                </Link>
               </li>
             </ul>
           </div>

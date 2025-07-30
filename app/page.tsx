@@ -31,6 +31,10 @@ const HomePage: React.FC = () => {
     window.open('https://github.com/akm-xdd/lookout-client', '_blank');
   };
 
+  const handleBlogClick = () => {
+    window.location.href = '/blog';
+  };
+
   return (
     <div  
       className="min-h-screen bg-black text-white overflow-hidden"
@@ -62,7 +66,7 @@ const HomePage: React.FC = () => {
       {/* Final CTA */}
       <CTASection 
         onPrimaryClick={handleGetStartedClick}
-        onSecondaryClick={handleViewSourceClick}
+        onSecondaryClick={handleBlogClick}
         
       />
     </div>
