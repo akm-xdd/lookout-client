@@ -49,7 +49,7 @@ const TOSPage: React.FC = () => {
             The legal stuff, but in plain English. Because nobody likes legal surprises.
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            Last updated: December 2024
+            Last updated: December 2025
           </p>
         </motion.div>
 

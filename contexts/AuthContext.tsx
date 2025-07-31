@@ -43,8 +43,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const pathname = usePathname();
 
   // Define public routes
-  const publicRoutes = ["/", "/login", "/register", "/auth/callback", "/privacy", "/tos", "/support", "/about", "/docs"];
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const publicRoutes = ["/", "/login", "/register", "/auth/callback", "/privacy", "/tos", "/support", "/about", "/docs", "/blog"];
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/blog/");
 
   useEffect(() => {
     // Get initial session
